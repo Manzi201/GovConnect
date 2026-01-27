@@ -1,0 +1,184 @@
+.complaint-details-container {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.details-card {
+  background: white;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 700px;
+}
+
+.details-card h2 {
+  color: #1e3a5f;
+  margin-top: 0;
+}
+
+.complaint-status {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.status-badge,
+.priority-badge {
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-submitted {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-in-progress {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+.status-resolved {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+.status-closed {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.priority-low {
+  background-color: #e0f2f1;
+  color: #00796b;
+}
+
+.priority-medium {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.priority-high {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.priority-urgent {
+  background-color: #ff1744;
+  color: white;
+}
+
+.details-section {
+  margin-bottom: 30px;
+}
+
+.details-section h3 {
+  color: #1e3a5f;
+  margin-bottom: 10px;
+  margin-top: 0;
+}
+
+.details-section p {
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.resolution-date {
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px !important;
+}
+
+.details-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+.feedback-form,
+.feedback-display {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 30px;
+}
+
+.feedback-form h3,
+.feedback-display h3 {
+  margin-top: 0;
+  color: #1e3a5f;
+}
+
+.rating {
+  display: flex;
+  gap: 8px;
+  margin: 15px 0;
+}
+
+.star {
+  font-size: 28px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ddd;
+  transition: color 0.2s;
+}
+
+.star:hover,
+.star.active {
+  color: #ffc107;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+}
+
+.btn-primary {
+  padding: 10px 20px;
+  background-color: #1e3a5f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+  background-color: #152a47;
+}
+
+.loading,
+.error-message,
+.no-data {
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 16px;
+}
+
+.error-message {
+  background-color: #ffe0e0;
+  color: #c00;
+  border-radius: 4px;
+}
