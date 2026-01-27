@@ -16,9 +16,7 @@
     "date-fns": "^2.30.0"
   },
   "devDependencies": {
-    "react-scripts": "5.0.1",
-    "@testing-library/react": "^14.0.0",
-    "@testing-library/jest-dom": "^6.1.0"
+    "react-scripts": "5.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
