@@ -22,12 +22,5 @@
       "src": "/(.*)",
       "dest": "frontend/build/$1"
     }
-  ],
-  "env": {
-    "MONGODB_URI": "@mongodb_uri",
-    "JWT_SECRET": "@jwt_secret",
-    "TWILIO_ACCOUNT_SID": "@twilio_account_sid",
-    "TWILIO_AUTH_TOKEN": "@twilio_auth_token",
-    "FIREBASE_PROJECT_ID": "@firebase_project_id"
-  }
+  ]
 }

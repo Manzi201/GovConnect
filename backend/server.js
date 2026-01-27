@@ -35,7 +35,9 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI, {
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/govconnect';
+
+mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
@@ -44,7 +46,10 @@ mongoose.connect(process.env.MONGODB_URI, {
 })
 .catch(err => {
   console.error('✗ MongoDB connection error:', err);
-  process.exit(1);
+  console.error('Using MongoDB URI:', MONGODB_URI.includes('localhost') ? 'Local MongoDB' : 'MongoDB Atlas');
+  if (!process.env.MONGODB_URI) {
+    console.warn('⚠ MONGODB_URI not set. Using local MongoDB as fallback.');
+  }
 });
 
 // Health check
