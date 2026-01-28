@@ -14,13 +14,14 @@ const userRoutes = require('./routes/users');
 const complaintRoutes = require('./routes/complaints');
 const analyticsRoutes = require('./routes/analytics');
 const notificationRoutes = require('./routes/notifications');
+const messageRoutes = require('./routes/messages');
 
 // Initialize app
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN,
+    origin: process.env.CORS_ORIGIN || '*',
     methods: ['GET', 'POST']
   }
 });
@@ -28,7 +29,7 @@ const io = socketIo(server, {
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN,
+  origin: process.env.CORS_ORIGIN || '*',
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
@@ -51,14 +52,25 @@ app.use('/api/users', userRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Real-time socket events
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
 
+  socket.on('join-user', (userId) => {
+    socket.join(`user-${userId}`);
+    console.log(`User ${userId} joined personal room`);
+  });
+
   socket.on('join-complaint', (complaintId) => {
     socket.join(`complaint-${complaintId}`);
     console.log(`Client ${socket.id} joined complaint-${complaintId}`);
+  });
+
+  socket.on('send-message', (data) => {
+    // data: { senderId, receiverId, content, complaintId }
+    io.to(`user-${data.receiverId}`).emit('new-message', data);
   });
 
   socket.on('disconnect', () => {

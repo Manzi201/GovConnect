@@ -12,6 +12,8 @@ import ComplaintsListPage from './pages/ComplaintsListPage';
 import ComplaintDetailsPage from './pages/ComplaintDetailsPage';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
 import ProfilePage from './pages/ProfilePage';
+import OfficialsDirectoryPage from './pages/OfficialsDirectoryPage';
+import ChatPage from './pages/ChatPage';
 
 import './App.css';
 
@@ -52,6 +54,7 @@ function App() {
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/submit-complaint" element={<SubmitComplaintPage />} />
+            <Route path="/officials" element={<OfficialsDirectoryPage />} />
 
             {isAuthenticated ? (
               <>
@@ -59,6 +62,7 @@ function App() {
                 <Route path="/complaint/:id" element={<ComplaintDetailsPage />} />
                 <Route path="/dashboard" element={<AnalyticsDashboard user={user} />} />
                 <Route path="/profile" element={<ProfilePage user={user} />} />
+                <Route path="/chat/:otherUserId" element={<ChatPage />} />
                 {user?.role === 'admin' && (
                   <Route path="/admin" element={<AnalyticsDashboard user={user} isSuperAdmin={true} />} />
                 )}

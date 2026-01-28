@@ -33,6 +33,10 @@ export default function Navigation({ isAuthenticated, user, onLogout }) {
             Submit Issue
           </Link>
 
+          <Link to="/officials" className={`nav-link ${location.pathname === '/officials' ? 'active' : ''}`}>
+            Officials
+          </Link>
+
           {isAuthenticated ? (
             <>
               <Link to="/complaints" className={`nav-link ${location.pathname === '/complaints' ? 'active' : ''}`}>

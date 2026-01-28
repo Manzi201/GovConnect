@@ -42,8 +42,32 @@ export default function HomePage() {
         <div className="imigongo-divider"></div>
         <div className="container">
           <div className="section-header">
-            <span className="label">Values</span>
-            <h2>Rooted in our <span className="text-forest">Tradition</span></h2>
+            <span className="label">Access</span>
+            <h2>Bridging the <span className="text-forest">Gap</span></h2>
+          </div>
+
+          <div className="discovery-promo glass fade-in-up">
+            <div className="promo-text">
+              <h3>Find the Right Official</h3>
+              <p>Access public services without needing personal contacts. Search by institution, department, or service area and connect directly with the officers in charge.</p>
+              <Link to="/officials" className="btn-premium btn-primary">Open Directory</Link>
+            </div>
+            <div className="promo-visual">
+              <div className="card-mockup glass">
+                <div className="mock-header">
+                  <div className="mock-avatar">🏢</div>
+                  <h4>Ministry of Infrastructure</h4>
+                </div>
+                <div className="mock-body">
+                  <div className="mock-line"></div>
+                  <div className="mock-line short"></div>
+                </div>
+                <div className="mock-footer">
+                  <div className="btn-mock">Chat</div>
+                  <div className="btn-mock">Report</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="values-grid">
@@ -58,9 +82,9 @@ export default function HomePage() {
               <p>Courageously addressing issues to build a stronger and more accountable nation.</p>
             </div>
             <div className="value-card glass">
-              <div className="value-icon">💡</div>
-              <h3>Ubuhanga</h3>
-              <p>Utilizing modern technology to preserve our values while advancing our development.</p>
+              <div className="value-icon">💬</div>
+              <h3>Ibiganiro</h3>
+              <p>Direct but controlled communication channel between citizens and government officials.</p>
             </div>
           </div>
         </div>

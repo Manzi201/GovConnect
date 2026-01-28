@@ -1,22 +1,29 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { complaintsAPI } from '../services/api';
 import './SubmitComplaintPage.css';
 
 export default function SubmitComplaintPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const prefilledOfficialId = queryParams.get('officialId');
+  const prefilledInstitution = queryParams.get('institution');
+
   const [formData, setFormData] = useState({
     category: 'other',
-    title: '',
+    title: prefilledInstitution ? `Issue with ${prefilledInstitution}` : '',
     description: '',
     location: { district: '', sector: '', cell: '' },
     attachments: [],
     isUrgent: false,
-    isAnonymous: false
+    isAnonymous: false,
+    assignedTo: prefilledOfficialId || null
   });
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const navigate = useNavigate();
 
   const categories = [
     'social-welfare', 'education', 'healthcare', 'infrastructure',

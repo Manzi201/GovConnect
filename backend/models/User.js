@@ -48,6 +48,18 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  institution: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  serviceArea: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  designation: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   location: {
     type: DataTypes.STRING,
     allowNull: false,

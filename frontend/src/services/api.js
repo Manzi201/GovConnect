@@ -28,7 +28,8 @@ export const authAPI = {
   getProfile: () => api.get('/users/profile'),
   updateProfile: (userData) => api.patch('/users/profile', userData),
   forgotPassword: (email) => api.post('/users/forgot-password', { email }),
-  resetPassword: (token, password) => api.post(`/users/reset-password/${token}`, { password })
+  resetPassword: (token, password) => api.post(`/users/reset-password/${token}`, { password }),
+  searchOfficials: (params) => api.get('/users/search-officials', { params })
 };
 
 // Complaints API
@@ -59,6 +60,13 @@ export const notificationsAPI = {
   markAsRead: (id) => api.patch(`/notifications/${id}/read`),
   markAllAsRead: () => api.patch('/notifications/mark-all/read'),
   deleteNotification: (id) => api.delete(`/notifications/${id}`)
+};
+
+// Messages API
+export const messagesAPI = {
+  getMessages: (otherUserId) => api.get(`/messages/${otherUserId}`),
+  sendMessage: (messageData) => api.post('/messages', messageData),
+  markAsRead: (senderId) => api.patch(`/messages/read/${senderId}`)
 };
 
 export default api;

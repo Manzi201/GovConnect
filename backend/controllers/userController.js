@@ -1,4 +1,5 @@
-const { User } = require('../models');
+const { User, sequelize } = require('../models');
+const { Op } = require('sequelize');
 const jwtSimple = require('jwt-simple');
 
 // Register new user
@@ -206,6 +207,29 @@ exports.getUserById = async (req, res) => {
     }
 
     res.status(200).json({ user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Search for officials
+exports.searchOfficials = async (req, res) => {
+  try {
+    const { institution, department, serviceArea, location } = req.query;
+
+    const filter = { role: 'official', isActive: true };
+    if (institution) filter.institution = { [Op.iLike]: `%${institution}%` };
+    if (department) filter.department = { [Op.iLike]: `%${department}%` };
+    if (serviceArea) filter.serviceArea = { [Op.iLike]: `%${serviceArea}%` };
+    if (location) filter.location = { [Op.iLike]: `%${location}%` };
+
+    const officials = await User.findAll({
+      where: filter,
+      attributes: ['id', 'name', 'institution', 'department', 'serviceArea', 'designation', 'location', 'profilePhoto'],
+      limit: 50
+    });
+
+    res.status(200).json({ officials });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
