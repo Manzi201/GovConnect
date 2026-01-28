@@ -1,12 +1,11 @@
-const Complaint = require('../models/Complaint');
-const User = require('../models/User');
+const { Complaint, User } = require('../models');
 
 // Submit complaint
 exports.submitComplaint = async (req, res) => {
   try {
     const { category, title, description, location, attachments, isAnonymous, isUrgent } = req.body;
 
-    const complaint = new Complaint({
+    const complaint = await Complaint.create({
       userId: req.user.id,
       category,
       title,
@@ -18,14 +17,12 @@ exports.submitComplaint = async (req, res) => {
       priority: isUrgent ? 'urgent' : 'medium'
     });
 
-    await complaint.save();
-
     // Update user complaint count
-    await User.findByIdAndUpdate(req.user.id, { $inc: { complaintsCount: 1 } });
+    await User.increment('complaintsCount', { by: 1, where: { id: req.user.id } });
 
     res.status(201).json({
       message: 'Complaint submitted successfully',
-      complaint: complaint
+      complaint
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -36,28 +33,30 @@ exports.submitComplaint = async (req, res) => {
 exports.getAllComplaints = async (req, res) => {
   try {
     const { category, status, priority, page = 1, limit = 10 } = req.query;
-    
+
     // Build filter object
     const filter = {};
     if (category) filter.category = category;
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
 
-    const complaints = await Complaint.find(filter)
-      .populate('userId', 'name email phone')
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit))
-      .sort({ submittedAt: -1 });
-
-    const total = await Complaint.countDocuments(filter);
+    const { count, rows: complaints } = await Complaint.findAndCountAll({
+      where: filter,
+      include: [
+        { model: User, as: 'citizen', attributes: ['name', 'email', 'phone'] }
+      ],
+      offset: (page - 1) * limit,
+      limit: parseInt(limit),
+      order: [['createdAt', 'DESC']]
+    });
 
     res.status(200).json({
       complaints,
       pagination: {
-        total,
+        total: count,
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(count / limit)
       }
     });
   } catch (error) {
@@ -68,17 +67,19 @@ exports.getAllComplaints = async (req, res) => {
 // Get complaint by ID
 exports.getComplaintById = async (req, res) => {
   try {
-    const complaint = await Complaint.findById(req.params.id)
-      .populate('userId', 'name email phone location')
-      .populate('assignedTo', 'name email department');
+    const complaint = await Complaint.findByPk(req.params.id, {
+      include: [
+        { model: User, as: 'citizen', attributes: ['name', 'email', 'phone', 'location'] },
+        { model: User, as: 'official', attributes: ['name', 'email', 'department'] }
+      ]
+    });
 
     if (!complaint) {
       return res.status(404).json({ error: 'Complaint not found' });
     }
 
     // Increment views
-    complaint.views += 1;
-    await complaint.save();
+    await complaint.increment('views', { by: 1 });
 
     res.status(200).json({ complaint });
   } catch (error) {
@@ -90,26 +91,25 @@ exports.getComplaintById = async (req, res) => {
 exports.updateComplaint = async (req, res) => {
   try {
     const { status, priority, assignedTo, resolution } = req.body;
-    
-    const complaint = await Complaint.findByIdAndUpdate(
-      req.params.id,
-      {
-        status,
-        priority,
-        assignedTo,
-        resolution,
-        updatedAt: new Date()
-      },
-      { new: true }
-    );
+
+    const complaint = await Complaint.findByPk(req.params.id);
 
     if (!complaint) {
       return res.status(404).json({ error: 'Complaint not found' });
     }
 
-    // If resolved, update user resolved complaints count
-    if (status === 'resolved') {
-      await User.findByIdAndUpdate(complaint.userId, { $inc: { resolvedComplaintsCount: 1 } });
+    const oldStatus = complaint.status;
+
+    await complaint.update({
+      status,
+      priority,
+      assignedTo,
+      resolution
+    });
+
+    // If newly resolved, update user resolved complaints count
+    if (status === 'resolved' && oldStatus !== 'resolved') {
+      await User.increment('resolvedComplaintsCount', { by: 1, where: { id: complaint.userId } });
     }
 
     res.status(200).json({
@@ -124,14 +124,17 @@ exports.updateComplaint = async (req, res) => {
 // Delete complaint
 exports.deleteComplaint = async (req, res) => {
   try {
-    const complaint = await Complaint.findByIdAndDelete(req.params.id);
-    
+    const complaint = await Complaint.findByPk(req.params.id);
+
     if (!complaint) {
       return res.status(404).json({ error: 'Complaint not found' });
     }
 
+    const userId = complaint.userId;
+    await complaint.destroy();
+
     // Decrease user complaint count
-    await User.findByIdAndUpdate(complaint.userId, { $inc: { complaintsCount: -1 } });
+    await User.increment('complaintsCount', { by: -1, where: { id: userId } });
 
     res.status(200).json({ message: 'Complaint deleted successfully' });
   } catch (error) {
@@ -143,18 +146,20 @@ exports.deleteComplaint = async (req, res) => {
 exports.submitFeedback = async (req, res) => {
   try {
     const { rating, comment } = req.body;
-    
-    const complaint = await Complaint.findByIdAndUpdate(
-      req.params.id,
-      {
-        feedback: {
-          rating,
-          comment,
-          submittedAt: new Date()
-        }
-      },
-      { new: true }
-    );
+
+    const complaint = await Complaint.findByPk(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({ error: 'Complaint not found' });
+    }
+
+    await complaint.update({
+      feedback: {
+        rating,
+        comment,
+        submittedAt: new Date()
+      }
+    });
 
     res.status(200).json({
       message: 'Feedback submitted successfully',
@@ -169,21 +174,21 @@ exports.submitFeedback = async (req, res) => {
 exports.getUserComplaints = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
-    
-    const complaints = await Complaint.find({ userId: req.params.userId })
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit))
-      .sort({ submittedAt: -1 });
 
-    const total = await Complaint.countDocuments({ userId: req.params.userId });
+    const { count, rows: complaints } = await Complaint.findAndCountAll({
+      where: { userId: req.params.userId },
+      offset: (page - 1) * limit,
+      limit: parseInt(limit),
+      order: [['createdAt', 'DESC']]
+    });
 
     res.status(200).json({
       complaints,
       pagination: {
-        total,
+        total: count,
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(count / limit)
       }
     });
   } catch (error) {

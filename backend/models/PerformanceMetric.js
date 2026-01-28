@@ -1,74 +1,70 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const performanceMetricSchema = new mongoose.Schema({
+const PerformanceMetric = sequelize.define('PerformanceMetric', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   date: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   },
   totalComplaints: {
-    type: Number,
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   },
   resolvedComplaints: {
-    type: Number,
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   },
   pendingComplaints: {
-    type: Number,
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   },
   rejectedComplaints: {
-    type: Number,
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   },
   averageResolutionTime: {
-    type: Number,
-    default: 0
+    type: DataTypes.FLOAT,
+    defaultValue: 0
   },
   resolutionRate: {
-    type: Number,
-    default: 0
+    type: DataTypes.FLOAT,
+    defaultValue: 0
   },
   categoryBreakdown: {
-    type: Map,
-    of: Number,
-    default: new Map()
+    type: DataTypes.JSONB,
+    defaultValue: {}
   },
   priorityBreakdown: {
-    type: Map,
-    of: Number,
-    default: new Map()
+    type: DataTypes.JSONB,
+    defaultValue: {}
   },
-  departmentPerformance: [
-    {
-      department: String,
-      totalHandled: Number,
-      resolved: Number,
-      averageTime: Number
-    }
-  ],
-  districtPerformance: [
-    {
-      district: String,
-      totalComplaints: Number,
-      resolved: Number,
-      pendingResolution: Number
-    }
-  ],
+  departmentPerformance: {
+    type: DataTypes.JSONB,
+    defaultValue: []
+  },
+  districtPerformance: {
+    type: DataTypes.JSONB,
+    defaultValue: []
+  },
   satisfactionScore: {
-    type: Number,
-    min: 0,
-    max: 5,
-    default: 0
+    type: DataTypes.FLOAT,
+    defaultValue: 0,
+    validate: {
+      min: 0,
+      max: 5
+    }
   },
   urgentComplaintsHandled: {
-    type: Number,
-    default: 0
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   }
+}, {
+  timestamps: true
 });
 
-module.exports = mongoose.model('PerformanceMetric', performanceMetricSchema);
+module.exports = PerformanceMetric;

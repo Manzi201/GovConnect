@@ -1,5 +1,5 @@
 const express = require('express');
-const mongoose = require('mongoose');
+const { connectDB } = require('./config/database');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -34,23 +34,8 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Database connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/govconnect';
-
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => {
-  console.log('✓ MongoDB connected successfully');
-})
-.catch(err => {
-  console.error('✗ MongoDB connection error:', err);
-  console.error('Using MongoDB URI:', MONGODB_URI.includes('localhost') ? 'Local MongoDB' : 'MongoDB Atlas');
-  if (!process.env.MONGODB_URI) {
-    console.warn('⚠ MONGODB_URI not set. Using local MongoDB as fallback.');
-  }
-});
+// Connect to PostgreSQL
+connectDB();
 
 // Health check
 app.get('/api/health', (req, res) => {
