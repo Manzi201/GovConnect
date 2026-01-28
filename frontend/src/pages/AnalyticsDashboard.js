@@ -26,7 +26,7 @@ export default function AnalyticsDashboard({ user, isSuperAdmin = false }) {
     } finally {
       setLoading(false);
     }
-  }, [user.id, user.role, isSuperAdmin]);
+  }, [user.id, user.role]);
 
   useEffect(() => {
     fetchData();

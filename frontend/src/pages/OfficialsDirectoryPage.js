@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { authAPI } from '../services/api';
 import './OfficialsDirectoryPage.css';
 
@@ -14,9 +14,9 @@ export default function OfficialsDirectoryPage() {
 
     useEffect(() => {
         handleSearch();
-    }, []);
+    }, [handleSearch]);
 
-    const handleSearch = async (e) => {
+    const handleSearch = useCallback(async (e) => {
         if (e) e.preventDefault();
         setLoading(true);
         try {
@@ -27,7 +27,7 @@ export default function OfficialsDirectoryPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filters]);
 
     const handleChange = (e) => {
         setFilters({ ...filters, [e.target.name]: e.target.value });

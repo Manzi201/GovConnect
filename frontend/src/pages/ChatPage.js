@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { messagesAPI, authAPI } from '../services/api';
 import io from 'socket.io-client';
@@ -41,22 +41,22 @@ export default function ChatPage() {
         });
 
         return () => socketRef.current.disconnect();
-    }, [otherUserId]);
+    }, [otherUserId, fetchOtherUser, fetchMessages]);
 
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
 
-    const fetchOtherUser = async () => {
+    const fetchOtherUser = useCallback(async () => {
         try {
             const response = await authAPI.getUserById(otherUserId);
             setOtherUser(response.data.user);
         } catch (error) {
             console.error('Failed to get user details', error);
         }
-    };
+    }, [otherUserId]);
 
-    const fetchMessages = async () => {
+    const fetchMessages = useCallback(async () => {
         try {
             const response = await messagesAPI.getMessages(otherUserId);
             setMessages(response.data.messages);
@@ -64,7 +64,7 @@ export default function ChatPage() {
         } catch (error) {
             console.error('Failed to fetch messages', error);
         }
-    };
+    }, [otherUserId]);
 
     const handleSend = async (e) => {
         e.preventDefault();
