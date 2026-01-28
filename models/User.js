@@ -1,94 +1,108 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 const bcrypt = require('bcryptjs');
 
-const userSchema = new mongoose.Schema({
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   name: {
-    type: String,
-    required: [true, 'Name is required'],
-    trim: true
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notEmpty: { msg: 'Name is required' }
+    }
   },
   email: {
-    type: String,
-    required: [true, 'Email is required'],
+    type: DataTypes.STRING,
+    allowNull: false,
     unique: true,
-    lowercase: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Invalid email format']
+    validate: {
+      isEmail: { msg: 'Invalid email format' },
+      notNull: { msg: 'Email is required' }
+    }
   },
   phone: {
-    type: String,
-    required: [true, 'Phone number is required'],
-    match: [/^(\+250|0)[0-9]{9}$/, 'Invalid Rwandan phone number']
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notNull: { msg: 'Phone number is required' },
+      is: /^(\+250|0)[0-9]{9}$/
+    }
   },
   password: {
-    type: String,
-    required: [true, 'Password is required'],
-    minlength: 6,
-    select: false
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      len: [6, 100],
+      notNull: { msg: 'Password is required' }
+    }
   },
   role: {
-    type: String,
-    enum: ['citizen', 'official', 'admin'],
-    default: 'citizen'
+    type: DataTypes.ENUM('citizen', 'official', 'admin'),
+    defaultValue: 'citizen'
   },
   department: {
-    type: String,
-    default: null
+    type: DataTypes.STRING,
+    allowNull: true
   },
   location: {
-    type: String,
-    required: true,
-    default: 'Kigali'
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'Kigali'
   },
   profilePhoto: {
-    type: String,
-    default: null
+    type: DataTypes.STRING,
+    allowNull: true
   },
   isActive: {
-    type: Boolean,
-    default: true
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   },
   isVerified: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
-  verificationToken: String,
-  resetPasswordToken: String,
-  resetPasswordExpire: Date,
-  lastLogin: Date,
+  verificationToken: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  resetPasswordToken: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  resetPasswordExpire: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  lastLogin: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   complaintsCount: {
-    type: Number,
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   },
   resolvedComplaintsCount: {
-    type: Number,
-    default: 0
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   }
+}, {
+  hooks: {
+    beforeSave: async (user) => {
+      if (user.changed('password')) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(user.password, salt);
+      }
+    }
+  },
+  timestamps: true
 });
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Method to compare passwords
-userSchema.methods.comparePassword = async function(enteredPassword) {
+User.prototype.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = User;

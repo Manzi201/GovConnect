@@ -1,5 +1,5 @@
 const express = require('express');
-const mongoose = require('mongoose');
+const { connectDB } = require('./config/database');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -34,18 +34,8 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => {
-  console.log('✓ MongoDB connected successfully');
-})
-.catch(err => {
-  console.error('✗ MongoDB connection error:', err);
-  process.exit(1);
-});
+// Connect to PostgreSQL
+connectDB();
 
 // Health check
 app.get('/api/health', (req, res) => {
