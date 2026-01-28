@@ -10,11 +10,7 @@ export default function ComplaintDetailsPage() {
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState({ rating: 0, comment: '' });
 
-  useEffect(() => {
-    fetchComplaint();
-  }, [id]);
-
-  const fetchComplaint = async () => {
+  const fetchComplaint = React.useCallback(async () => {
     try {
       setLoading(true);
       const response = await complaintsAPI.getComplaintById(id);
@@ -25,7 +21,11 @@ export default function ComplaintDetailsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchComplaint();
+  }, [fetchComplaint]);
 
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
@@ -46,7 +46,7 @@ export default function ComplaintDetailsPage() {
     <div className="complaint-details-container">
       <div className="details-card">
         <h2>{complaint.title}</h2>
-        
+
         <div className="complaint-status">
           <span className={`status-badge status-${complaint.status}`}>
             {complaint.status}

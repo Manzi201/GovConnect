@@ -14,11 +14,7 @@ export default function ComplaintsListPage() {
     page: 1
   });
 
-  useEffect(() => {
-    fetchComplaints();
-  }, [filters]);
-
-  const fetchComplaints = async () => {
+  const fetchComplaints = React.useCallback(async () => {
     try {
       setLoading(true);
       const response = await complaintsAPI.getAllComplaints(filters);
@@ -29,7 +25,11 @@ export default function ComplaintsListPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    fetchComplaints();
+  }, [fetchComplaints]);
 
   const getStatusBadge = (status) => {
     const statusMap = {
