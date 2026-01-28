@@ -55,7 +55,7 @@ export default function SubmitComplaintPage() {
     setLoading(true);
 
     try {
-      const response = await complaintsAPI.submitComplaint(formData);
+      await complaintsAPI.submitComplaint(formData);
       // If user is guest, maybe redirect to a success page or home
       const token = localStorage.getItem('token');
       if (token) {

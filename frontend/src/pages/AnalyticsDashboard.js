@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { analyticsAPI, complaintsAPI } from '../services/api';
 import './AnalyticsDashboard.css';
 
@@ -8,11 +8,7 @@ export default function AnalyticsDashboard({ user, isSuperAdmin = false }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchData();
-  }, [user, isSuperAdmin]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       if (user.role === 'citizen') {
@@ -30,7 +26,11 @@ export default function AnalyticsDashboard({ user, isSuperAdmin = false }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user.id, user.role, isSuperAdmin]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (loading) return <div className="loading-state glass">Loading...</div>;
 
@@ -44,6 +44,8 @@ export default function AnalyticsDashboard({ user, isSuperAdmin = false }) {
           </div>
           {isSuperAdmin && <div className="badge-admin">Super Admin</div>}
         </header>
+
+        {error && <div className="error-badge">{error}</div>}
 
         {/* Stats Grid for Officials/Admins */}
         {(user.role !== 'citizen' || isSuperAdmin) && dashboard && (
