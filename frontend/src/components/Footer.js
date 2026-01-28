@@ -1,5 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import {
+  X as TwitterIcon,
+  Facebook as FacebookIcon,
+  Instagram as InstagramIcon,
+  Gavel as GavelIcon
+} from '@mui/icons-material';
 import './Footer.css';
 
 export default function Footer() {
@@ -8,26 +14,28 @@ export default function Footer() {
       <div className="footer-imigongo"></div>
       <div className="container footer-grid">
         <div className="footer-brand">
-          <div className="logo-v2">🇷🇼 GovConnect</div>
+          <Link to="/" className="footer-logo">
+            <GavelIcon sx={{ mr: 1 }} /> GovConnect
+          </Link>
           <p>
             Building a brighter future for Rwanda through transparent,
             citizen-driven public service transformation.
             Rooted in our culture, driven by progress.
           </p>
           <div className="social-pill">
-            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">𝕏</a>
-            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">f</a>
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">📸</a>
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"><TwitterIcon fontSize="small" /></a>
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"><FacebookIcon fontSize="small" /></a>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer"><InstagramIcon fontSize="small" /></a>
           </div>
         </div>
 
         <div className="footer-links-group">
-          <h4>Platfrom</h4>
+          <h4>Platform</h4>
           <ul>
             <li><Link to="/">Home</Link></li>
             <li><Link to="/submit-complaint">Submit Issue</Link></li>
+            <li><Link to="/officials">Officials Directory</Link></li>
             <li><Link to="/dashboard">Dashboard</Link></li>
-            <li><Link to="/complaints">Track Issue</Link></li>
           </ul>
         </div>
 
@@ -41,10 +49,10 @@ export default function Footer() {
         </div>
 
         <div className="footer-links-group">
-          <h4>Office</h4>
+          <h4>Headquarters</h4>
           <p>Kigali Heights, 4th Floor</p>
           <p>Kigali, Rwanda</p>
-          <p className="contact-link">info@govconnect.rw</p>
+          <p className="contact-link">contact@govconnect.rw</p>
         </div>
       </div>
 

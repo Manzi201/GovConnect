@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import {
+    Send as SendIcon,
+    Circle as CircleIcon,
+    Business as BusinessIcon
+} from '@mui/icons-material';
 import { messagesAPI, authAPI } from '../services/api';
 import io from 'socket.io-client';
 import './ChatPage.css';
@@ -14,38 +19,6 @@ export default function ChatPage() {
     const [currentUser, setCurrentUser] = useState(null);
     const socketRef = useRef();
     const chatEndRef = useRef();
-
-    useEffect(() => {
-        // Get current user from storage or profile API
-        const user = JSON.parse(localStorage.getItem('user'));
-        setCurrentUser(user);
-
-        // Fetch other user details
-        fetchOtherUser();
-        // Fetch initial messages
-        fetchMessages();
-
-        // Socket connection
-        socketRef.current = io(SOCKET_URL);
-
-        if (user) {
-            socketRef.current.emit('join-user', user.id);
-        }
-
-        socketRef.current.on('new-message', (message) => {
-            if (message.senderId === otherUserId) {
-                setMessages(prev => [...prev, message]);
-                // Also mark as read locally
-                messagesAPI.markAsRead(otherUserId);
-            }
-        });
-
-        return () => socketRef.current.disconnect();
-    }, [otherUserId, fetchOtherUser, fetchMessages]);
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
 
     const fetchOtherUser = useCallback(async () => {
         try {
@@ -65,6 +38,33 @@ export default function ChatPage() {
             console.error('Failed to fetch messages', error);
         }
     }, [otherUserId]);
+
+    useEffect(() => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        setCurrentUser(user);
+
+        fetchOtherUser();
+        fetchMessages();
+
+        socketRef.current = io(SOCKET_URL);
+
+        if (user) {
+            socketRef.current.emit('join-user', user.id);
+        }
+
+        socketRef.current.on('new-message', (message) => {
+            if (message.senderId === otherUserId) {
+                setMessages(prev => [...prev, message]);
+                messagesAPI.markAsRead(otherUserId);
+            }
+        });
+
+        return () => socketRef.current.disconnect();
+    }, [otherUserId, fetchOtherUser, fetchMessages]);
+
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
     const handleSend = async (e) => {
         e.preventDefault();
@@ -86,11 +86,7 @@ export default function ChatPage() {
         }
     };
 
-    const scrollToBottom = () => {
-        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    if (!otherUser) return <div className="loading">Initializing connection...</div>;
+    if (!otherUser) return <div className="loading-state glass">Connecting to service...</div>;
 
     return (
         <div className="chat-page-container fade-in">
@@ -101,8 +97,13 @@ export default function ChatPage() {
                     </div>
                     <div className="header-info">
                         <h3>{otherUser.name}</h3>
-                        <span className="status-online">● Online</span>
-                        <div className="official-area">{otherUser.serviceArea} • {otherUser.institution}</div>
+                        <span className="status-online">
+                            <CircleIcon sx={{ fontSize: 8, mr: 0.5 }} /> Online
+                        </span>
+                        <div className="official-area">
+                            <BusinessIcon sx={{ fontSize: 14, mr: 0.5, verticalAlign: 'text-bottom' }} />
+                            {otherUser.serviceArea || 'General'} • {otherUser.institution || 'Government'}
+                        </div>
                     </div>
                 </header>
 
@@ -123,12 +124,12 @@ export default function ChatPage() {
                 <form className="chat-input-area" onSubmit={handleSend}>
                     <input
                         type="text"
-                        placeholder="Type your message..."
+                        placeholder="Type your message here..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                     />
-                    <button type="submit" className="btn-send">
-                        <span>➤</span>
+                    <button type="submit" className="btn-send" disabled={!newMessage.trim()}>
+                        <SendIcon />
                     </button>
                 </form>
             </div>

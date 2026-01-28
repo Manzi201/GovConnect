@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { analyticsAPI, complaintsAPI } from '../services/api';
+import {
+  Refresh as RefreshIcon,
+  Add as AddIcon,
+  Person as PersonIcon,
+  Settings as SettingsIcon,
+  Assignment as IssueIcon,
+  CheckCircle as ResolvedIcon,
+  PendingActions as PendingIcon,
+  ErrorOutline as UrgentIcon
+} from '@mui/icons-material';
 import './AnalyticsDashboard.css';
 
 export default function AnalyticsDashboard({ user, isSuperAdmin = false }) {
@@ -51,22 +61,34 @@ export default function AnalyticsDashboard({ user, isSuperAdmin = false }) {
         {(user.role !== 'citizen' || isSuperAdmin) && dashboard && (
           <div className="stats-grid">
             <div className="stat-card">
-              <span className="label">Total Received</span>
+              <div className="stat-card-header">
+                <IssueIcon color="primary" />
+                <span className="label">Total Received</span>
+              </div>
               <span className="value">{dashboard.totalComplaints}</span>
               <div className="spark-line green"></div>
             </div>
             <div className="stat-card">
-              <span className="label">Resolved</span>
+              <div className="stat-card-header">
+                <ResolvedIcon color="success" />
+                <span className="label">Resolved</span>
+              </div>
               <span className="value">{dashboard.resolvedComplaints}</span>
               <div className="spark-line yellow"></div>
             </div>
             <div className="stat-card">
-              <span className="label">Pending</span>
+              <div className="stat-card-header">
+                <PendingIcon color="info" />
+                <span className="label">Pending</span>
+              </div>
               <span className="value">{dashboard.pendingComplaints}</span>
               <div className="spark-line blue"></div>
             </div>
             <div className="stat-card">
-              <span className="label">Urgent</span>
+              <div className="stat-card-header">
+                <UrgentIcon color="error" />
+                <span className="label">Urgent</span>
+              </div>
               <span className="value">{dashboard.urgentComplaints}</span>
               <div className="spark-line red"></div>
             </div>
@@ -77,11 +99,17 @@ export default function AnalyticsDashboard({ user, isSuperAdmin = false }) {
         {user.role === 'citizen' && (
           <div className="stats-grid">
             <div className="stat-card">
-              <span className="label">My Total Submissions</span>
+              <div className="stat-card-header">
+                <IssueIcon color="primary" />
+                <span className="label">My Total Submissions</span>
+              </div>
               <span className="value">{user.complaintsCount || 0}</span>
             </div>
             <div className="stat-card">
-              <span className="label">Resolved</span>
+              <div className="stat-card-header">
+                <ResolvedIcon color="success" />
+                <span className="label">Resolved</span>
+              </div>
               <span className="value">{user.resolvedComplaintsCount || 0}</span>
             </div>
           </div>
@@ -91,7 +119,9 @@ export default function AnalyticsDashboard({ user, isSuperAdmin = false }) {
           <section className="recent-activity">
             <div className="section-title">
               <h3>{user.role === 'citizen' ? 'My Recent Issues' : 'Recent Submissions'}</h3>
-              <button onClick={() => fetchData()} className="btn-refresh">↻ Refresh</button>
+              <button onClick={() => fetchData()} className="btn-refresh">
+                <RefreshIcon fontSize="small" /> Refresh
+              </button>
             </div>
 
             <div className="activity-list">
@@ -116,16 +146,22 @@ export default function AnalyticsDashboard({ user, isSuperAdmin = false }) {
             <h3>Quick Actions</h3>
             <div className="actions-grid">
               <button className="action-btn" onClick={() => (window.location.href = '/submit-complaint')}>
-                <span className="icon">📝</span>
+                <div className="action-icon-bg">
+                  <AddIcon color="primary" />
+                </div>
                 New Issue
               </button>
               <button className="action-btn" onClick={() => (window.location.href = '/profile')}>
-                <span className="icon">👤</span>
+                <div className="action-icon-bg">
+                  <PersonIcon color="primary" />
+                </div>
                 Profile
               </button>
               {isSuperAdmin && (
                 <button className="action-btn highlight">
-                  <span className="icon">⚙️</span>
+                  <div className="action-icon-bg">
+                    <SettingsIcon color="action" />
+                  </div>
                   Settings
                 </button>
               )}

@@ -1,4 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import {
+    Business as BusinessIcon,
+    Folder as DepartmentIcon,
+    LocationOn as LocationIcon,
+    Chat as ChatIcon,
+    Report as ReportIcon,
+    Search as SearchIcon
+} from '@mui/icons-material';
 import { authAPI } from '../services/api';
 import './OfficialsDirectoryPage.css';
 
@@ -12,10 +20,6 @@ export default function OfficialsDirectoryPage() {
         location: ''
     });
 
-    useEffect(() => {
-        handleSearch();
-    }, [handleSearch]);
-
     const handleSearch = useCallback(async (e) => {
         if (e) e.preventDefault();
         setLoading(true);
@@ -28,6 +32,10 @@ export default function OfficialsDirectoryPage() {
             setLoading(false);
         }
     }, [filters]);
+
+    useEffect(() => {
+        handleSearch();
+    }, [handleSearch]);
 
     const handleChange = (e) => {
         setFilters({ ...filters, [e.target.name]: e.target.value });
@@ -45,35 +53,46 @@ export default function OfficialsDirectoryPage() {
                     <form onSubmit={handleSearch} className="filter-form">
                         <div className="filter-group">
                             <label>Institution</label>
-                            <input
-                                type="text"
-                                name="institution"
-                                placeholder="e.g. MINALOC, REG"
-                                value={filters.institution}
-                                onChange={handleChange}
-                            />
+                            <div className="input-with-icon">
+                                <BusinessIcon className="input-icon" />
+                                <input
+                                    type="text"
+                                    name="institution"
+                                    placeholder="e.g. MINALOC, REG"
+                                    value={filters.institution}
+                                    onChange={handleChange}
+                                />
+                            </div>
                         </div>
                         <div className="filter-group">
                             <label>Department</label>
-                            <input
-                                type="text"
-                                name="department"
-                                placeholder="e.g. Finance, Public Works"
-                                value={filters.department}
-                                onChange={handleChange}
-                            />
+                            <div className="input-with-icon">
+                                <DepartmentIcon className="input-icon" />
+                                <input
+                                    type="text"
+                                    name="department"
+                                    placeholder="e.g. Finance, Public Works"
+                                    value={filters.department}
+                                    onChange={handleChange}
+                                />
+                            </div>
                         </div>
                         <div className="filter-group">
                             <label>Service Area</label>
-                            <input
-                                type="text"
-                                name="serviceArea"
-                                placeholder="e.g. Water, Education"
-                                value={filters.serviceArea}
-                                onChange={handleChange}
-                            />
+                            <div className="input-with-icon">
+                                <LocationIcon className="input-icon" />
+                                <input
+                                    type="text"
+                                    name="serviceArea"
+                                    placeholder="e.g. Water, Education"
+                                    value={filters.serviceArea}
+                                    onChange={handleChange}
+                                />
+                            </div>
                         </div>
-                        <button type="submit" className="btn-premium btn-primary">Search</button>
+                        <button type="submit" className="btn-premium btn-primary">
+                            <SearchIcon style={{ marginRight: '8px' }} /> Search
+                        </button>
                     </form>
                 </section>
 
@@ -94,18 +113,18 @@ export default function OfficialsDirectoryPage() {
                                     <h3>{official.name}</h3>
                                     <div className="designation">{official.designation || 'Government Officer'}</div>
                                     <div className="meta-info">
-                                        <span>🏢 {official.institution}</span>
-                                        <span>📁 {official.department}</span>
-                                        <span>📍 {official.location}</span>
+                                        <span><BusinessIcon fontSize="small" /> {official.institution}</span>
+                                        <span><DepartmentIcon fontSize="small" /> {official.department}</span>
+                                        <span><LocationIcon fontSize="small" /> {official.location}</span>
                                     </div>
                                     <div className="service-badge">{official.serviceArea}</div>
                                 </div>
                                 <div className="card-actions">
                                     <button className="btn-premium btn-accent btn-sm" onClick={() => window.location.href = `/chat/${official.id}`}>
-                                        Chat with Official
+                                        <ChatIcon fontSize="small" style={{ marginRight: '5px' }} /> Chat
                                     </button>
                                     <button className="btn-premium btn-outline btn-sm" onClick={() => window.location.href = `/submit-complaint?officialId=${official.id}`}>
-                                        Report Issue
+                                        <ReportIcon fontSize="small" style={{ marginRight: '5px' }} /> Report
                                     </button>
                                 </div>
                             </div>

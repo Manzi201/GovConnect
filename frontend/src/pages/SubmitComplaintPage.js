@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  ArrowBack as BackIcon,
+  ArrowForward as ForwardIcon,
+  Flag as FlagIcon,
+  CheckCircle as DoneIcon
+} from '@mui/icons-material';
 import { complaintsAPI } from '../services/api';
 import './SubmitComplaintPage.css';
 
@@ -56,7 +62,6 @@ export default function SubmitComplaintPage() {
 
     try {
       await complaintsAPI.submitComplaint(formData);
-      // If user is guest, maybe redirect to a success page or home
       const token = localStorage.getItem('token');
       if (token) {
         navigate('/complaints');
@@ -75,7 +80,9 @@ export default function SubmitComplaintPage() {
     <div className="submit-page cultural-bg">
       <div className="form-overlay glass">
         <div className="form-header">
-          <div className="cultural-indicator">🇷🇼</div>
+          <div className="cultural-indicator">
+            <FlagIcon color="primary" fontSize="large" />
+          </div>
           <h1>Ijwi ry'Umuturage</h1>
           <p>Your voice matters. Submit your concern and contribute to Rwanda's progress.</p>
 
@@ -131,7 +138,7 @@ export default function SubmitComplaintPage() {
               </div>
 
               <button type="button" className="btn-premium btn-primary" onClick={() => setStep(2)}>
-                Next: Location Details →
+                Next: Location Details <ForwardIcon style={{ marginLeft: '10px' }} />
               </button>
             </div>
           ) : (
@@ -167,10 +174,10 @@ export default function SubmitComplaintPage() {
 
               <div className="form-actions">
                 <button type="button" className="btn-premium btn-outline" onClick={() => setStep(1)}>
-                  ← Back
+                  <BackIcon style={{ marginRight: '10px' }} /> Back
                 </button>
                 <button type="submit" disabled={loading} className="btn-premium btn-accent">
-                  {loading ? 'Submitting...' : 'Submit to GovConnect'}
+                  {loading ? 'Submitting...' : <><DoneIcon style={{ marginRight: '10px' }} /> Submit to GovConnect</>}
                 </button>
               </div>
             </div>

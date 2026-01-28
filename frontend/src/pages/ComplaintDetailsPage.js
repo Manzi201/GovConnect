@@ -1,5 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
+import {
+  Star as StarIcon,
+  StarBorder as StarBorderIcon,
+  LocationOn as LocationIcon,
+  CalendarToday as DateIcon,
+  Visibility as ViewsIcon,
+  CheckCircle as ResolvedIcon,
+  Category as CategoryIcon,
+  Assignment as IssueIcon
+} from '@mui/icons-material';
 import { complaintsAPI } from '../services/api';
 import './ComplaintDetailsPage.css';
 
@@ -10,14 +20,14 @@ export default function ComplaintDetailsPage() {
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState({ rating: 0, comment: '' });
 
-  const fetchComplaint = React.useCallback(async () => {
+  const fetchComplaint = useCallback(async () => {
     try {
       setLoading(true);
       const response = await complaintsAPI.getComplaintById(id);
       setComplaint(response.data.complaint);
       setError('');
     } catch (err) {
-      setError('Failed to load complaint');
+      setError('Failed to load complaint details');
     } finally {
       setLoading(false);
     }
@@ -38,106 +48,120 @@ export default function ComplaintDetailsPage() {
     }
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
-  if (error) return <div className="error-message">{error}</div>;
-  if (!complaint) return <div className="no-data">Complaint not found</div>;
+  if (loading) return <div className="loading-state glass">Retrieving record...</div>;
+  if (error || !complaint) return (
+    <div className="error-container glass">
+      <p>{error || 'Complaint not found'}</p>
+      <button onClick={() => window.history.back()}>Go Back</button>
+    </div>
+  );
 
   return (
-    <div className="complaint-details-container">
-      <div className="details-card">
-        <h2>{complaint.title}</h2>
+    <div className="details-page cultural-bg">
+      <div className="container-narrow">
+        <div className="details-card glass fade-in-up">
+          <header className="details-header">
+            <div className="title-area">
+              <span className={`status-pill pill-${complaint.status}`}>{complaint.status}</span>
+              <h1>{complaint.title}</h1>
+            </div>
+            {complaint.priority === 'urgent' && <span className="urgent-banner">URGENT</span>}
+          </header>
 
-        <div className="complaint-status">
-          <span className={`status-badge status-${complaint.status}`}>
-            {complaint.status}
-          </span>
-          <span className={`priority-badge priority-${complaint.priority}`}>
-            {complaint.priority}
-          </span>
-        </div>
-
-        <div className="details-section">
-          <h3>Description</h3>
-          <p>{complaint.description}</p>
-        </div>
-
-        <div className="details-row">
-          <div className="details-section">
-            <h3>Category</h3>
-            <p>{complaint.category}</p>
-          </div>
-          <div className="details-section">
-            <h3>Submitted Date</h3>
-            <p>{new Date(complaint.submittedAt).toLocaleDateString()}</p>
-          </div>
-        </div>
-
-        <div className="details-row">
-          <div className="details-section">
-            <h3>Location</h3>
-            <p>
-              {complaint.location.district}
-              {complaint.location.sector && `, ${complaint.location.sector}`}
-              {complaint.location.cell && `, ${complaint.location.cell}`}
-            </p>
-          </div>
-          <div className="details-section">
-            <h3>Views</h3>
-            <p>{complaint.views}</p>
-          </div>
-        </div>
-
-        {complaint.resolution && (
-          <div className="details-section">
-            <h3>Resolution</h3>
-            <p>{complaint.resolution.description}</p>
-            <p className="resolution-date">
-              Resolved on: {new Date(complaint.resolution.resolvedAt).toLocaleDateString()}
-            </p>
-          </div>
-        )}
-
-        {complaint.status === 'resolved' && !complaint.feedback && (
-          <form onSubmit={handleFeedbackSubmit} className="feedback-form">
-            <h3>Share Your Feedback</h3>
-            <div className="form-group">
-              <label>Rating</label>
-              <div className="rating">
-                {[1, 2, 3, 4, 5].map(star => (
-                  <button
-                    key={star}
-                    type="button"
-                    className={`star ${star <= feedback.rating ? 'active' : ''}`}
-                    onClick={() => setFeedback({ ...feedback, rating: star })}
-                  >
-                    ★
-                  </button>
-                ))}
+          <div className="details-grid-modern">
+            <div className="detail-item">
+              <CategoryIcon color="primary" sx={{ fontSize: 20 }} />
+              <div>
+                <label>Category</label>
+                <p>{complaint.category.replace('-', ' ')}</p>
               </div>
             </div>
-            <div className="form-group">
-              <label htmlFor="comment">Comment</label>
-              <textarea
-                id="comment"
-                value={feedback.comment}
-                onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })}
-                placeholder="Share your feedback..."
-                rows="4"
-              />
+            <div className="detail-item">
+              <DateIcon color="primary" sx={{ fontSize: 20 }} />
+              <div>
+                <label>Reported On</label>
+                <p>{new Date(complaint.createdAt || complaint.submittedAt).toLocaleDateString()}</p>
+              </div>
             </div>
-            <button type="submit" className="btn-primary">Submit Feedback</button>
-          </form>
-        )}
-
-        {complaint.feedback && (
-          <div className="feedback-display">
-            <h3>Your Feedback</h3>
-            <p className="rating">
-              {'★'.repeat(complaint.feedback.rating)}{'☆'.repeat(5 - complaint.feedback.rating)}
-            </p>
-            <p>{complaint.feedback.comment}</p>
+            <div className="detail-item">
+              <LocationIcon color="primary" sx={{ fontSize: 20 }} />
+              <div>
+                <label>Location</label>
+                <p>{complaint.location.district}{complaint.location.sector && `, ${complaint.location.sector}`}</p>
+              </div>
+            </div>
+            <div className="detail-item">
+              <ViewsIcon color="primary" sx={{ fontSize: 20 }} />
+              <div>
+                <label>Public Views</label>
+                <p>{complaint.views || 0}</p>
+              </div>
+            </div>
           </div>
-        )}
+
+          <section className="description-section">
+            <div className="sec-title">
+              <IssueIcon fontSize="small" />
+              <h3>Issue Description</h3>
+            </div>
+            <p className="desc-text">{complaint.description}</p>
+          </section>
+
+          {complaint.resolution && (
+            <section className="resolution-section glass-accent">
+              <div className="sec-title">
+                <ResolvedIcon color="success" />
+                <h3>Government Resolution</h3>
+              </div>
+              <p className="res-text">{complaint.resolution.description}</p>
+              <div className="res-meta">
+                Resolved on {new Date(complaint.resolution.resolvedAt).toLocaleDateString()}
+              </div>
+            </section>
+          )}
+
+          {complaint.status === 'resolved' && !complaint.feedback && (
+            <section className="feedback-flow fade-in">
+              <h3>Share Your Feedback</h3>
+              <p>How would you rate the resolution provided by the official?</p>
+              <form onSubmit={handleFeedbackSubmit}>
+                <div className="star-rating">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      className={`star-btn ${star <= feedback.rating ? 'active' : ''}`}
+                      onClick={() => setFeedback({ ...feedback, rating: star })}
+                    >
+                      {star <= feedback.rating ? <StarIcon /> : <StarBorderIcon />}
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  placeholder="Tell us what you think about the service..."
+                  value={feedback.comment}
+                  onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })}
+                  required
+                />
+                <button type="submit" className="btn-premium btn-primary">Submit Feedback</button>
+              </form>
+            </section>
+          )}
+
+          {complaint.feedback && (
+            <section className="feedback-display-section glass">
+              <div className="sec-title">
+                <h3>Your Experience</h3>
+                <div className="display-stars">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    star <= complaint.feedback.rating ? <StarIcon key={star} color="primary" /> : <StarBorderIcon key={star} />
+                  ))}
+                </div>
+              </div>
+              <p className="feedback-comment">"{complaint.feedback.comment}"</p>
+            </section>
+          )}
+        </div>
       </div>
     </div>
   );

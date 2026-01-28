@@ -1,5 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import {
+  ArrowForward as ArrowForwardIcon,
+  People as PeopleIcon,
+  VerifiedUser as VerifiedIcon,
+  TrendingUp as TrendingUpIcon,
+  ChatBubbleOutline as ChatIcon,
+  Business as BusinessIcon,
+  ReportProblem as ReportIcon,
+  SupportAgent as TechIcon
+} from '@mui/icons-material';
 import './HomePage.css';
 
 export default function HomePage() {
@@ -18,21 +28,11 @@ export default function HomePage() {
           <div className="hero-actions">
             <Link to="/submit-complaint" className="btn-premium btn-accent">
               Submit Issue Now
-              <span className="icon">→</span>
+              <ArrowForwardIcon style={{ marginLeft: '10px' }} />
             </Link>
             <Link to="/register" className="btn-premium btn-outline">
               Join Our Community
             </Link>
-          </div>
-        </div>
-
-        {/* Pulse of Updates (Dynamic-looking ticker) */}
-        <div className="pulse-updates glass">
-          <div className="pulse-title">LATEST RESOLUTIONS</div>
-          <div className="pulse-ticker">
-            <span className="ticker-item">✅ Infrastructure: Potholes fixed in Kigali - 2h ago</span>
-            <span className="ticker-item">✅ Healthcare: New supplies delivered to Kayonza - 5h ago</span>
-            <span className="ticker-item">✅ Education: Textbooks distributed in Musanze - 1d ago</span>
           </div>
         </div>
       </section>
@@ -55,7 +55,9 @@ export default function HomePage() {
             <div className="promo-visual">
               <div className="card-mockup glass">
                 <div className="mock-header">
-                  <div className="mock-avatar">🏢</div>
+                  <div className="mock-avatar">
+                    <BusinessIcon color="primary" />
+                  </div>
                   <h4>Ministry of Infrastructure</h4>
                 </div>
                 <div className="mock-body">
@@ -63,8 +65,8 @@ export default function HomePage() {
                   <div className="mock-line short"></div>
                 </div>
                 <div className="mock-footer">
-                  <div className="btn-mock">Chat</div>
-                  <div className="btn-mock">Report</div>
+                  <div className="btn-mock"><ChatIcon fontSize="small" style={{ marginRight: '5px' }} /> Chat</div>
+                  <div className="btn-mock"><ReportIcon fontSize="small" style={{ marginRight: '5px' }} /> Report</div>
                 </div>
               </div>
             </div>
@@ -72,17 +74,23 @@ export default function HomePage() {
 
           <div className="values-grid">
             <div className="value-card glass">
-              <div className="value-icon">🤝</div>
+              <div className="value-icon">
+                <PeopleIcon fontSize="large" color="primary" />
+              </div>
               <h3>Ubumwe</h3>
               <p>Strengthening the bond between our government and citizens through constant communication.</p>
             </div>
             <div className="value-card glass">
-              <div className="value-icon">🦁</div>
+              <div className="value-icon">
+                <VerifiedIcon fontSize="large" color="primary" />
+              </div>
               <h3>Ubutwari</h3>
               <p>Courageously addressing issues to build a stronger and more accountable nation.</p>
             </div>
             <div className="value-card glass">
-              <div className="value-icon">💬</div>
+              <div className="value-icon">
+                <ChatIcon fontSize="large" color="primary" />
+              </div>
               <h3>Ibiganiro</h3>
               <p>Direct but controlled communication channel between citizens and government officials.</p>
             </div>
@@ -90,20 +98,20 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Statistics */}
+      {/* Featured Statistics - Focus on Values */}
       <section className="stats-modern glass-dark">
         <div className="container stats-flex">
           <div className="stat-block">
-            <div className="stat-value">98%</div>
-            <div className="stat-label">Response Accuracy</div>
+            <div className="stat-value"><TrendingUpIcon fontSize="large" /></div>
+            <div className="stat-label">Responsive Governance</div>
           </div>
           <div className="stat-block">
-            <div className="stat-value">24/7</div>
-            <div className="stat-label">Support Availability</div>
+            <div className="stat-value"><TechIcon fontSize="large" /></div>
+            <div className="stat-label">24/7 Digital Portal</div>
           </div>
           <div className="stat-block">
-            <div className="stat-value">100%</div>
-            <div className="stat-label">Community Driven</div>
+            <div className="stat-value"><VerifiedIcon fontSize="large" /></div>
+            <div className="stat-label">Citizen Empowerment</div>
           </div>
         </div>
       </section>
@@ -112,7 +120,7 @@ export default function HomePage() {
       <section className="cta-simple">
         <div className="cta-box glass">
           <h2>Have an issue? We're listening.</h2>
-          <p>No account needed for first-time submissions. We value your feedback.</p>
+          <p>Your feedback is vital to our progress. Share your concerns with us today.</p>
           <Link to="/submit-complaint" className="btn-premium btn-primary">Start Submission</Link>
         </div>
       </section>

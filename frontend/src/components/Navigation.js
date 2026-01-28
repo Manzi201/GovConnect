@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import {
+  Gavel as GavelIcon,
+  Logout as LogoutIcon,
+  AccountCircle as UserIcon
+} from '@mui/icons-material';
 import './Navigation.css';
 
 export default function Navigation({ isAuthenticated, user, onLogout }) {
@@ -20,7 +25,7 @@ export default function Navigation({ isAuthenticated, user, onLogout }) {
     <nav className={`navbar glass ${scrolled || !isHome ? 'navbar-scrolled' : ''}`}>
       <div className="nav-container">
         <Link to="/" className="nav-logo">
-          <span className="logo-icon">🇷🇼</span>
+          <GavelIcon className="logo-icon-mui" />
           <span className="logo-text">GovConnect</span>
         </Link>
 
@@ -52,10 +57,14 @@ export default function Navigation({ isAuthenticated, user, onLogout }) {
               )}
               <div className="user-profile-nav">
                 <Link to="/profile" className="profile-trigger">
-                  <div className="avatar">{user?.name?.charAt(0)}</div>
-                  <span className="user-name">{user?.name}</span>
+                  <div className="avatar">
+                    {user?.profilePhoto ? <img src={user.profilePhoto} alt="" /> : <UserIcon />}
+                  </div>
+                  <span className="user-name">{user?.name.split(' ')[0]}</span>
                 </Link>
-                <button className="btn-logout" onClick={onLogout}>Logout</button>
+                <button className="btn-logout" onClick={onLogout}>
+                  <LogoutIcon fontSize="small" />
+                </button>
               </div>
             </>
           ) : (
