@@ -29,7 +29,10 @@ const User = sequelize.define('User', {
     allowNull: false,
     validate: {
       notNull: { msg: 'Phone number is required' },
-      is: /^(\+250|0)[0-9]{9}$/
+      is: {
+        args: [/^(\+250|0)[0-9]{9}$/],
+        msg: 'Invalid Rwandan phone format. Use 07... or +2507...'
+      }
     }
   },
   password: {

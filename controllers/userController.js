@@ -6,9 +6,10 @@ exports.register = async (req, res) => {
   try {
     const { name, email, phone, password, role, location } = req.body;
 
+    // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
+      return res.status(400).json({ error: 'An account with this email already exists.' });
     }
 
     const user = await User.create({
@@ -26,7 +27,7 @@ exports.register = async (req, res) => {
     );
 
     res.status(201).json({
-      message: 'User registered successfully',
+      message: 'Urakaza neza! Registration successful.',
       token,
       user: {
         id: user.id,
@@ -36,7 +37,16 @@ exports.register = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Registration Error:', error);
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        error: error.errors.map(e => e.message).join(', ')
+      });
+    }
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({ error: 'This email or phone number is already registered.' });
+    }
+    res.status(500).json({ error: 'Internal server error during registration. Please try again later.' });
   }
 };
 
@@ -51,12 +61,12 @@ exports.login = async (req, res) => {
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
     user.lastLogin = new Date();
@@ -75,11 +85,14 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        location: user.location
+        location: user.location,
+        complaintsCount: user.complaintsCount,
+        resolvedComplaintsCount: user.resolvedComplaintsCount
       }
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Login Error:', error);
+    res.status(500).json({ error: 'Internal server error during login. Please try again.' });
   }
 };
 
