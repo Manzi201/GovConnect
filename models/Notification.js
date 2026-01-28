@@ -1,60 +1,50 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const notificationSchema = new mongoose.Schema({
-  notificationId: {
-    type: String,
-    unique: true,
-    default: () => 'NOTIF-' + Date.now()
+const Notification = sequelize.define('Notification', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
   },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    type: DataTypes.UUID,
+    allowNull: false
   },
   complaintId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Complaint',
-    required: true
+    type: DataTypes.UUID,
+    allowNull: true
   },
   type: {
-    type: String,
-    enum: ['status-update', 'new-comment', 'feedback-request', 'escalation', 'system'],
-    default: 'status-update'
+    type: DataTypes.ENUM('status_change', 'assignment', 'resolution', 'feedback', 'general'),
+    allowNull: false
   },
   channel: {
-    type: String,
-    enum: ['email', 'sms', 'in-app', 'push'],
-    default: 'in-app'
+    type: DataTypes.ENUM('in-app', 'email', 'sms', 'push'),
+    defaultValue: 'in-app'
   },
-  subject: String,
+  title: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
   message: {
-    type: String,
-    required: true
+    type: DataTypes.TEXT,
+    allowNull: false
   },
   isRead: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
-  readAt: Date,
-  actionUrl: String,
-  sentAt: {
-    type: Date,
-    default: Date.now
+  readAt: {
+    type: DataTypes.DATE,
+    allowNull: true
   },
-  deliveredAt: Date,
-  failureReason: String,
-  retryCount: {
-    type: Number,
-    default: 0
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  metadata: {
+    type: DataTypes.JSONB,
+    defaultValue: {}
   }
+}, {
+  timestamps: true
 });
 
-// Index for faster queries
-notificationSchema.index({ userId: 1, isRead: 1 });
-notificationSchema.index({ createdAt: -1 });
-
-module.exports = mongoose.model('Notification', notificationSchema);
+module.exports = Notification;

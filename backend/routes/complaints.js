@@ -6,9 +6,9 @@ const { authenticate } = require('../middleware/auth');
 // Public routes
 router.get('/', complaintController.getAllComplaints);
 router.get('/:id', complaintController.getComplaintById);
+router.post('/', complaintController.submitComplaint);
 
 // Protected routes
-router.post('/', authenticate, complaintController.submitComplaint);
 router.patch('/:id', authenticate, complaintController.updateComplaint);
 router.delete('/:id', authenticate, complaintController.deleteComplaint);
 router.post('/:id/feedback', authenticate, complaintController.submitFeedback);

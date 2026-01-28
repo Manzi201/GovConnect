@@ -14,7 +14,7 @@ const Complaint = sequelize.define('Complaint', {
   },
   userId: {
     type: DataTypes.UUID,
-    allowNull: false
+    allowNull: true
   },
   category: {
     type: DataTypes.ENUM(

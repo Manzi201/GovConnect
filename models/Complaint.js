@@ -1,19 +1,23 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const complaintSchema = new mongoose.Schema({
+const Complaint = sequelize.define('Complaint', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   complaintId: {
-    type: String,
+    type: DataTypes.STRING,
     unique: true,
-    default: () => 'COMP-' + Date.now()
+    defaultValue: () => 'COMP-' + Date.now()
   },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    type: DataTypes.UUID,
+    allowNull: true
   },
   category: {
-    type: String,
-    enum: [
+    type: DataTypes.ENUM(
       'social-welfare',
       'education',
       'healthcare',
@@ -24,103 +28,63 @@ const complaintSchema = new mongoose.Schema({
       'agriculture',
       'security',
       'other'
-    ],
-    required: true
+    ),
+    allowNull: false
   },
   title: {
-    type: String,
-    required: [true, 'Complaint title is required'],
-    trim: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   description: {
-    type: String,
-    required: [true, 'Complaint description is required']
+    type: DataTypes.TEXT,
+    allowNull: false
   },
   location: {
-    district: String,
-    sector: String,
-    cell: String,
-    coordinates: {
-      latitude: Number,
-      longitude: Number
-    }
+    type: DataTypes.JSONB,
+    defaultValue: {}
   },
-  attachments: [
-    {
-      url: String,
-      type: String,
-      uploadedAt: Date
-    }
-  ],
+  attachments: {
+    type: DataTypes.JSONB,
+    defaultValue: []
+  },
   status: {
-    type: String,
-    enum: ['submitted', 'in-progress', 'resolved', 'closed', 'rejected'],
-    default: 'submitted'
+    type: DataTypes.ENUM('submitted', 'in-progress', 'resolved', 'closed', 'rejected'),
+    defaultValue: 'submitted'
   },
   priority: {
-    type: String,
-    enum: ['low', 'medium', 'high', 'urgent'],
-    default: 'medium'
+    type: DataTypes.ENUM('low', 'medium', 'high', 'urgent'),
+    defaultValue: 'medium'
   },
   isUrgent: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
   assignedTo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    default: null
+    type: DataTypes.UUID,
+    allowNull: true
   },
   resolution: {
-    description: String,
-    resolvedAt: Date,
-    resolvedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    }
+    type: DataTypes.JSONB,
+    allowNull: true
   },
   feedback: {
-    rating: {
-      type: Number,
-      min: 1,
-      max: 5
-    },
-    comment: String,
-    submittedAt: Date
+    type: DataTypes.JSONB,
+    allowNull: true
   },
   isAnonymous: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
   views: {
-    type: Number,
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   },
-  statusUpdates: [
-    {
-      status: String,
-      message: String,
-      updatedAt: Date,
-      updatedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-      }
-    }
-  ],
-  submittedAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+  statusUpdates: {
+    type: DataTypes.JSONB,
+    defaultValue: []
   }
+}, {
+  timestamps: true
 });
 
-// Index for faster queries
-complaintSchema.index({ userId: 1, createdAt: -1 });
-complaintSchema.index({ status: 1 });
-complaintSchema.index({ priority: 1 });
-complaintSchema.index({ category: 1 });
-
-module.exports = mongoose.model('Complaint', complaintSchema);
+module.exports = Complaint;

@@ -6,7 +6,7 @@ exports.submitComplaint = async (req, res) => {
     const { category, title, description, location, attachments, isAnonymous, isUrgent } = req.body;
 
     const complaint = await Complaint.create({
-      userId: req.user.id,
+      userId: req.user ? req.user.id : null,
       category,
       title,
       description,
@@ -17,8 +17,10 @@ exports.submitComplaint = async (req, res) => {
       priority: isUrgent ? 'urgent' : 'medium'
     });
 
-    // Update user complaint count
-    await User.increment('complaintsCount', { by: 1, where: { id: req.user.id } });
+    // Update user complaint count if authenticated
+    if (req.user) {
+      await User.increment('complaintsCount', { by: 1, where: { id: req.user.id } });
+    }
 
     res.status(201).json({
       message: 'Complaint submitted successfully',

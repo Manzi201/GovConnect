@@ -51,15 +51,17 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/submit-complaint" element={<SubmitComplaintPage />} />
+
             {isAuthenticated ? (
               <>
-                <Route path="/submit-complaint" element={<SubmitComplaintPage />} />
                 <Route path="/complaints" element={<ComplaintsListPage />} />
                 <Route path="/complaint/:id" element={<ComplaintDetailsPage />} />
-                {user?.role !== 'citizen' && (
-                  <Route path="/analytics" element={<AnalyticsDashboard />} />
-                )}
+                <Route path="/dashboard" element={<AnalyticsDashboard user={user} />} />
                 <Route path="/profile" element={<ProfilePage user={user} />} />
+                {user?.role === 'admin' && (
+                  <Route path="/admin" element={<AnalyticsDashboard user={user} isSuperAdmin={true} />} />
+                )}
               </>
             ) : (
               <Route path="*" element={<Navigate to="/" />} />

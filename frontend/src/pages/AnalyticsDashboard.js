@@ -1,82 +1,135 @@
 import React, { useState, useEffect } from 'react';
-import { analyticsAPI } from '../services/api';
+import { analyticsAPI, complaintsAPI } from '../services/api';
 import './AnalyticsDashboard.css';
 
-export default function AnalyticsDashboard() {
+export default function AnalyticsDashboard({ user, isSuperAdmin = false }) {
   const [dashboard, setDashboard] = useState(null);
+  const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchDashboard();
-  }, []);
+    fetchData();
+  }, [user, isSuperAdmin]);
 
-  const fetchDashboard = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await analyticsAPI.getDashboard();
-      setDashboard(response.data.dashboard);
+      if (user.role === 'citizen') {
+        const response = await complaintsAPI.getUserComplaints(user.id);
+        setComplaints(response.data.complaints);
+      } else {
+        const response = await analyticsAPI.getDashboard();
+        setDashboard(response.data.dashboard);
+        const complaintsRes = await complaintsAPI.getAllComplaints();
+        setComplaints(complaintsRes.data.complaints);
+      }
       setError('');
     } catch (err) {
-      setError('Failed to load dashboard');
+      setError('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <div className="loading">Loading analytics...</div>;
-  if (error) return <div className="error-message">{error}</div>;
-  if (!dashboard) return null;
+  if (loading) return <div className="loading-state glass">Loading...</div>;
 
   return (
-    <div className="analytics-container">
-      <h2>Analytics Dashboard</h2>
+    <div className="dashboard-page cultural-bg">
+      <div className="dashboard-content glass">
+        <header className="dashboard-header">
+          <div>
+            <h1>Dashboard</h1>
+            <p className="welcome-msg">Muraho, {user.name}. Here is your activity overview.</p>
+          </div>
+          {isSuperAdmin && <div className="badge-admin">Super Admin</div>}
+        </header>
 
-      <div className="metrics-grid">
-        <div className="metric-card">
-          <h3>Total Complaints</h3>
-          <p className="metric-value">{dashboard.totalComplaints}</p>
-        </div>
-        <div className="metric-card">
-          <h3>Resolved</h3>
-          <p className="metric-value" style={{ color: '#4caf50' }}>
-            {dashboard.resolvedComplaints}
-          </p>
-        </div>
-        <div className="metric-card">
-          <h3>Pending</h3>
-          <p className="metric-value" style={{ color: '#ff9800' }}>
-            {dashboard.pendingComplaints}
-          </p>
-        </div>
-        <div className="metric-card">
-          <h3>Resolution Rate</h3>
-          <p className="metric-value">{dashboard.resolutionRate}</p>
-        </div>
-      </div>
-
-      <div className="chart-section">
-        <h3>Complaints by Category</h3>
-        <div className="category-list">
-          {dashboard.categoryBreakdown?.map((cat, idx) => (
-            <div key={idx} className="category-item">
-              <span>{cat._id}</span>
-              <div className="progress-bar">
-                <div
-                  className="progress-fill"
-                  style={{
-                    width: `${(cat.count / dashboard.totalComplaints) * 100}%`
-                  }}
-                />
-              </div>
-              <span className="count">{cat.count}</span>
+        {/* Stats Grid for Officials/Admins */}
+        {(user.role !== 'citizen' || isSuperAdmin) && dashboard && (
+          <div className="stats-grid">
+            <div className="stat-card">
+              <span className="label">Total Received</span>
+              <span className="value">{dashboard.totalComplaints}</span>
+              <div className="spark-line green"></div>
             </div>
-          ))}
-        </div>
-      </div>
+            <div className="stat-card">
+              <span className="label">Resolved</span>
+              <span className="value">{dashboard.resolvedComplaints}</span>
+              <div className="spark-line yellow"></div>
+            </div>
+            <div className="stat-card">
+              <span className="label">Pending</span>
+              <span className="value">{dashboard.pendingComplaints}</span>
+              <div className="spark-line blue"></div>
+            </div>
+            <div className="stat-card">
+              <span className="label">Urgent</span>
+              <span className="value">{dashboard.urgentComplaints}</span>
+              <div className="spark-line red"></div>
+            </div>
+          </div>
+        )}
 
-      <div className="info-box">
-        <p>📊 Dashboard shows real-time statistics for public service performance monitoring.</p>
+        {/* Citizen Specific Summary */}
+        {user.role === 'citizen' && (
+          <div className="stats-grid">
+            <div className="stat-card">
+              <span className="label">My Total Submissions</span>
+              <span className="value">{user.complaintsCount || 0}</span>
+            </div>
+            <div className="stat-card">
+              <span className="label">Resolved</span>
+              <span className="value">{user.resolvedComplaintsCount || 0}</span>
+            </div>
+          </div>
+        )}
+
+        <div className="dashboard-main">
+          <section className="recent-activity">
+            <div className="section-title">
+              <h3>{user.role === 'citizen' ? 'My Recent Issues' : 'Recent Submissions'}</h3>
+              <button onClick={() => fetchData()} className="btn-refresh">↻ Refresh</button>
+            </div>
+
+            <div className="activity-list">
+              {complaints.length > 0 ? (
+                complaints.slice(0, 5).map(c => (
+                  <div key={c.id || c._id} className="activity-item">
+                    <div className={`status-dot ${c.status}`}></div>
+                    <div className="activity-info">
+                      <strong>{c.title}</strong>
+                      <span>{c.category} • {new Date(c.createdAt || c.submittedAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className={`badge-status ${c.status}`}>{c.status}</div>
+                  </div>
+                ))
+              ) : (
+                <div className="empty-state">No recent activity to show.</div>
+              )}
+            </div>
+          </section>
+
+          <aside className="quick-actions">
+            <h3>Quick Actions</h3>
+            <div className="actions-grid">
+              <button className="action-btn" onClick={() => (window.location.href = '/submit-complaint')}>
+                <span className="icon">📝</span>
+                New Issue
+              </button>
+              <button className="action-btn" onClick={() => (window.location.href = '/profile')}>
+                <span className="icon">👤</span>
+                Profile
+              </button>
+              {isSuperAdmin && (
+                <button className="action-btn highlight">
+                  <span className="icon">⚙️</span>
+                  Settings
+                </button>
+              )}
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
   );
