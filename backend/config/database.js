@@ -9,6 +9,12 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST || 'localhost',
     dialect: 'postgres',
     logging: false,
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
+      }
+    },
     pool: {
       max: 5,
       min: 0,
@@ -22,7 +28,7 @@ const connectDB = async () => {
   try {
     await sequelize.authenticate();
     console.log('✓ PostgreSQL connected successfully via Sequelize');
-    
+
     // Sync models - only use { alter: true } in development
     if (process.env.NODE_ENV === 'development') {
       await sequelize.sync({ alter: true });

@@ -14,6 +14,7 @@ const userRoutes = require('./routes/users');
 const complaintRoutes = require('./routes/complaints');
 const analyticsRoutes = require('./routes/analytics');
 const notificationRoutes = require('./routes/notifications');
+const messageRoutes = require('./routes/messages');
 
 // Initialize app
 const app = express();
@@ -51,14 +52,27 @@ app.use('/api/users', userRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Real-time socket events
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
 
+  // User joins their own private room
+  socket.on('join-user', (userId) => {
+    socket.join(`user-${userId}`);
+    console.log(`Client ${socket.id} joined user-${userId}`);
+  });
+
   socket.on('join-complaint', (complaintId) => {
     socket.join(`complaint-${complaintId}`);
     console.log(`Client ${socket.id} joined complaint-${complaintId}`);
+  });
+
+  // Handle private messaging
+  socket.on('send-message', (message) => {
+    // Emit to the receiver's private room
+    io.to(`user-${message.receiverId}`).emit('new-message', message);
   });
 
   socket.on('disconnect', () => {

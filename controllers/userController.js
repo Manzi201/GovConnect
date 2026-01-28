@@ -203,6 +203,34 @@ exports.getUserById = async (req, res) => {
   }
 };
 
+// Search Officials
+exports.searchOfficials = async (req, res) => {
+  try {
+    const { institution, department, serviceArea, location } = req.query;
+    const { Op } = require('sequelize');
+
+    const where = {
+      role: 'official',
+      isActive: true
+    };
+
+    if (institution) where.institution = { [Op.iLike]: `%${institution}%` };
+    if (department) where.department = { [Op.iLike]: `%${department}%` };
+    if (serviceArea) where.serviceArea = { [Op.iLike]: `%${serviceArea}%` };
+    if (location) where.location = { [Op.iLike]: `%${location}%` };
+
+    const officials = await User.findAll({
+      where,
+      attributes: ['id', 'name', 'role', 'institution', 'department', 'serviceArea', 'designation', 'location', 'profilePhoto'],
+      order: [['name', 'ASC']]
+    });
+
+    res.status(200).json({ officials });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Logout
 exports.logout = async (req, res) => {
   res.status(200).json({ message: 'Logged out successfully' });

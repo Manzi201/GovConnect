@@ -12,6 +12,7 @@ router.post('/reset-password/:token', userController.resetPassword);
 // Protected routes
 router.get('/profile', authenticate, userController.getProfile);
 router.patch('/profile', authenticate, userController.updateProfile);
+router.get('/search-officials', authenticate, userController.searchOfficials);
 router.post('/logout', authenticate, userController.logout);
 router.get('/:id', authenticate, userController.getUserById);
 
