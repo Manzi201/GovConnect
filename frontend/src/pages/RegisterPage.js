@@ -68,7 +68,6 @@ export default function RegisterPage() {
               email: formData.email,
               phone: formData.phone,
               location: formData.location,
-              password: 'ENCRYPTED_BY_SUPABASE', // Placeholder or omit if not needed in public table
               role: 'citizen'
             }
           ]);
