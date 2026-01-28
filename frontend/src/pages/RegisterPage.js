@@ -9,7 +9,7 @@ import {
   AppRegistration as RegisterIcon,
   Flag as FlagIcon
 } from '@mui/icons-material';
-import { authAPI } from '../services/api';
+import { supabase } from '../services/supabase';
 import './AuthPages.css';
 
 export default function RegisterPage() {
@@ -42,11 +42,47 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const { confirmPassword, ...data } = formData;
-      await authAPI.register(data);
-      navigate('/login');
+      // 1. Sign up with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            phone: formData.phone,
+            location: formData.location
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // 2. Insert user details into public 'Users' table
+        const { error: dbError } = await supabase
+          .from('Users')
+          .insert([
+            {
+              id: authData.user.id,
+              name: formData.name,
+              email: formData.email,
+              phone: formData.phone,
+              location: formData.location,
+              password: 'ENCRYPTED_BY_SUPABASE', // Placeholder or omit if not needed in public table
+              role: 'citizen'
+            }
+          ]);
+
+        if (dbError) {
+          // If inserting into public table fails, we might want to cleanup auth user or warn
+          console.error('Error creating user profile:', dbError);
+          throw new Error('Account created but profile setup failed. Please contact support.');
+        }
+
+        navigate('/login');
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -121,6 +157,7 @@ export default function RegisterPage() {
                   value={formData.location}
                   onChange={handleChange}
                   className="select-with-icon"
+                  style={{ width: '100%', paddingLeft: '40px' }}
                 >
                   <option value="Kigali">Kigali</option>
                   <option value="Kayonza">Kayonza</option>

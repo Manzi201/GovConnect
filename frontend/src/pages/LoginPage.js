@@ -6,7 +6,7 @@ import {
   Login as LoginIcon,
   Flag as FlagIcon
 } from '@mui/icons-material';
-import { authAPI } from '../services/api';
+import { supabase } from '../services/supabase';
 import './AuthPages.css';
 
 export default function LoginPage({ onLogin }) {
@@ -26,11 +26,39 @@ export default function LoginPage({ onLogin }) {
     setLoading(true);
 
     try {
-      const response = await authAPI.login(formData);
-      onLogin(response.data.user, response.data.token);
-      navigate('/dashboard');
+      // 1. Login with Supabase
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (authError) throw authError;
+
+      if (data.user && data.session) {
+        // 2. Fetch user profile from public 'Users' table
+        const { data: profile, error: profileError } = await supabase
+          .from('Users')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError) {
+          console.warn('Could not fetch user profile:', profileError);
+          // Fallback to auth user metadata if profile missing
+          const fallbackUser = {
+            ...data.user,
+            name: data.user.user_metadata.name || data.user.email, // Fallback name
+            role: 'citizen' // Default role
+          };
+          onLogin(fallbackUser, data.session.access_token);
+        } else {
+          onLogin(profile, data.session.access_token);
+        }
+
+        navigate('/dashboard');
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Authentication failed. Please check your credentials.');
+      setError(err.message || 'Authentication failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
