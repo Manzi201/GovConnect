@@ -1,123 +1,329 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GovConnect - Deployment Diagnostics</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 20px;
-            background: #f5f5f5;
         }
-        .diagnostic-card {
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
             background: white;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
         }
+
         h1 {
-            color: #2c3e50;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
             margin-bottom: 30px;
+            font-size: 14px;
         }
-        .check-item {
-            padding: 15px;
-            margin: 10px 0;
-            border-left: 4px solid #3498db;
-            background: #ecf0f1;
-            border-radius: 4px;
+
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
         }
+
+        .section h2 {
+            color: #667eea;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .status:last-child {
+            border-bottom: none;
+        }
+
+        .status-label {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .status-value {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
         .success {
-            border-left-color: #27ae60;
             background: #d4edda;
+            color: #155724;
         }
+
         .error {
-            border-left-color: #e74c3c;
             background: #f8d7da;
+            color: #721c24;
         }
+
         .warning {
-            border-left-color: #f39c12;
             background: #fff3cd;
+            color: #856404;
         }
-        code {
-            background: #2c3e50;
-            color: #ecf0f1;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
+
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
         }
-        .env-check {
-            margin-top: 20px;
-        }
-        pre {
-            background: #2c3e50;
-            color: #ecf0f1;
+
+        .code {
+            background: #282c34;
+            color: #abb2bf;
             padding: 15px;
-            border-radius: 5px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
             overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .actions {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        #console-output {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .console-line {
+            padding: 5px;
+            margin: 2px 0;
+            border-left: 3px solid #667eea;
+            padding-left: 10px;
+        }
+
+        .error-line {
+            border-left-color: #dc3545;
+            background: #fff5f5;
         }
     </style>
 </head>
+
 <body>
-    <div class="diagnostic-card">
+    <div class="container">
         <h1>🔍 GovConnect Deployment Diagnostics</h1>
-        <div id="diagnostics"></div>
+        <p class="subtitle">Analyzing your application deployment status...</p>
+
+        <div class="section">
+            <h2>📋 System Status</h2>
+            <div id="system-status"></div>
+        </div>
+
+        <div class="section">
+            <h2>🌐 Network & API Tests</h2>
+            <div id="network-status"></div>
+        </div>
+
+        <div class="section">
+            <h2>⚙️ Environment Variables</h2>
+            <div id="env-status"></div>
+        </div>
+
+        <div class="section">
+            <h2>📝 Console Output</h2>
+            <div id="console-output"></div>
+        </div>
+
+        <div class="section">
+            <h2>💡 Recommended Actions</h2>
+            <div id="recommendations"></div>
+        </div>
+
+        <div class="actions">
+            <button class="btn" onclick="runTests()">🔄 Re-run Tests</button>
+            <button class="btn" onclick="window.location.href='/'">🏠 Go to Home</button>
+        </div>
     </div>
 
     <script>
-        const diagnostics = document.getElementById('diagnostics');
-        const results = [];
-
-        // Check environment variables
-        const requiredEnvVars = {
-            'REACT_APP_SUPABASE_URL': process.env.REACT_APP_SUPABASE_URL,
-            'REACT_APP_SUPABASE_ANON_KEY': process.env.REACT_APP_SUPABASE_ANON_KEY,
-            'REACT_APP_API_URL': process.env.REACT_APP_API_URL,
+        const logs = [];
+        const originalConsole = {
+            log: console.log,
+            error: console.error,
+            warn: console.warn
         };
 
-        results.push('<div class="env-check"><h3>Environment Variables Check:</h3>');
-        
-        for (const [key, value] of Object.entries(requiredEnvVars)) {
-            if (value) {
-                results.push(`<div class="check-item success">✅ ${key}: SET (${value.substring(0, 30)}...)</div>`);
-            } else {
-                results.push(`<div class="check-item error">❌ ${key}: MISSING</div>`);
-            }
-        }
-        results.push('</div>');
+        // Capture console logs
+        console.log = function (...args) {
+            logs.push({ type: 'log', message: args.join(' ') });
+            originalConsole.log.apply(console, args);
+        };
 
-        // Check if we can reach the app
-        results.push('<div class="env-check"><h3>Application Check:</h3>');
-        try {
-            results.push('<div class="check-item success">✅ HTML loaded successfully</div>');
-            results.push('<div class="check-item success">✅ JavaScript is executing</div>');
-        } catch (e) {
-            results.push(`<div class="check-item error">❌ Error: ${e.message}</div>`);
-        }
-        results.push('</div>');
+        console.error = function (...args) {
+            logs.push({ type: 'error', message: args.join(' ') });
+            originalConsole.error.apply(console, args);
+        };
 
-        // Display results
-        diagnostics.innerHTML = results.join('');
+        console.warn = function (...args) {
+            logs.push({ type: 'warn', message: args.join(' ') });
+            originalConsole.warn.apply(console, args);
+        };
 
-        // Add instructions
-        const missingVars = Object.entries(requiredEnvVars).filter(([k, v]) => !v);
-        if (missingVars.length > 0) {
-            diagnostics.innerHTML += `
-                <div class="env-check">
-                    <h3>⚠️ Action Required:</h3>
-                    <div class="check-item warning">
-                        <p><strong>Missing environment variables detected!</strong></p>
-                        <p>Please add the following to your Netlify environment variables:</p>
-                        <pre>REACT_APP_SUPABASE_URL=https://qwisdiwxrdhyhjpmnhhj.supabase.co
-REACT_APP_SUPABASE_ANON_KEY=[Get from Supabase Dashboard]
-REACT_APP_API_URL=http://localhost:5000/api</pre>
-                        <p>After adding, trigger a new deploy in Netlify.</p>
-                    </div>
-                </div>
+        function addStatus(containerId, label, value, statusClass) {
+            const container = document.getElementById(containerId);
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'status';
+            statusDiv.innerHTML = `
+                <span class="status-label">${label}</span>
+                <span class="status-value ${statusClass}">${value}</span>
             `;
+            container.appendChild(statusDiv);
         }
+
+        function addRecommendation(text) {
+            const container = document.getElementById('recommendations');
+            const div = document.createElement('div');
+            div.style.padding = '10px';
+            div.style.marginBottom = '10px';
+            div.style.background = '#fff';
+            div.style.borderRadius = '6px';
+            div.innerHTML = `📌 ${text}`;
+            container.appendChild(div);
+        }
+
+        async function runTests() {
+            // Clear previous results
+            document.getElementById('system-status').innerHTML = '';
+            document.getElementById('network-status').innerHTML = '';
+            document.getElementById('env-status').innerHTML = '';
+            document.getElementById('recommendations').innerHTML = '';
+
+            // System Status
+            addStatus('system-status', 'Browser', navigator.userAgent.split(' ').slice(-2).join(' '), 'info');
+            addStatus('system-status', 'Screen Size', `${window.innerWidth} × ${window.innerHeight}`, 'info');
+            addStatus('system-status', 'Online Status', navigator.onLine ? 'Online' : 'Offline', navigator.onLine ? 'success' : 'error');
+
+            // Environment Variables
+            let apiUrl = 'NOT SET';
+            let supabaseUrl = 'NOT SET';
+
+            try {
+                // This will only work if the code is compiled by React/Webpack
+                // For a static HTML file, we check if process exists
+                if (typeof process !== 'undefined' && process.env) {
+                    apiUrl = process.env.REACT_APP_API_URL || 'NOT SET';
+                    supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'NOT SET';
+                }
+            } catch (e) { }
+
+            addStatus('env-status', 'REACT_APP_API_URL', apiUrl, apiUrl !== 'NOT SET' ? 'success' : 'error');
+            addStatus('env-status', 'REACT_APP_SUPABASE_URL', supabaseUrl, supabaseUrl !== 'NOT SET' ? 'success' : 'error');
+            addStatus('system-status', 'Host', window.location.host, 'info');
+
+
+            // Network Tests
+            try {
+                // Test if we can reach the API
+                const apiTestUrl = apiUrl !== 'NOT SET' ? apiUrl : 'https://govconnecting.netlify.app/api';
+                addStatus('network-status', 'Testing API Connection', 'In Progress...', 'warning');
+
+                const response = await fetch(apiTestUrl + '/health', {
+                    method: 'GET',
+                    signal: AbortSignal.timeout(5000)
+                }).catch(err => {
+                    return { ok: false, error: err.message };
+                });
+
+                if (response.ok) {
+                    addStatus('network-status', 'API Health Check', 'Connected ✓', 'success');
+                } else {
+                    addStatus('network-status', 'API Health Check', 'Failed ✗', 'error');
+                    addRecommendation('Backend API is not responding. Make sure your backend server is deployed and running.');
+                }
+            } catch (error) {
+                addStatus('network-status', 'API Health Check', 'Error: ' + error.message, 'error');
+                addRecommendation('Unable to connect to backend API. Check if the API URL is correct and the server is running.');
+            }
+
+            // Check for React
+            addStatus('system-status', 'React', typeof React !== 'undefined' ? 'Loaded ✓' : 'Not Found ✗',
+                typeof React !== 'undefined' ? 'success' : 'error');
+
+            // Display console logs
+            const consoleOutput = document.getElementById('console-output');
+            consoleOutput.innerHTML = '';
+            if (logs.length === 0) {
+                consoleOutput.innerHTML = '<div style="color: #999; font-style: italic;">No console logs captured yet.</div>';
+            } else {
+                logs.forEach(log => {
+                    const div = document.createElement('div');
+                    div.className = `console-line ${log.type === 'error' ? 'error-line' : ''}`;
+                    div.textContent = `[${log.type.toUpperCase()}] ${log.message}`;
+                    consoleOutput.appendChild(div);
+                });
+            }
+
+            // Recommendations
+            if (apiUrl === 'NOT SET') {
+                addRecommendation('Set REACT_APP_API_URL in Netlify Environment Variables (Site Settings → Environment variables)');
+            }
+
+            if (supabaseUrl === 'NOT SET') {
+                addRecommendation('Set REACT_APP_SUPABASE_URL in Netlify Environment Variables');
+            }
+
+            addRecommendation('Make sure to redeploy the site after setting environment variables');
+            addRecommendation('Check Netlify deploy logs for any build errors');
+        }
+
+        // Run tests on page load
+        window.addEventListener('load', runTests);
+
+        // Capture errors
+        window.addEventListener('error', (event) => {
+            console.error('Global Error:', event.message, event.filename, event.lineno);
+        });
     </script>
 </body>
+
 </html>
