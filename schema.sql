@@ -118,11 +118,15 @@ ALTER TABLE public."PerformanceMetrics" ENABLE ROW LEVEL SECURITY;
 -- 👤 USERS POLICIES
 DROP POLICY IF EXISTS "Users can read their own profile" ON public."Users";
 DROP POLICY IF EXISTS "Users can update their own profile" ON public."Users";
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public."Users";
 DROP POLICY IF EXISTS "Anyone can read official users" ON public."Users";
 CREATE POLICY "Users can read their own profile" ON public."Users" FOR
 SELECT TO authenticated USING (auth.uid() = id);
 CREATE POLICY "Users can update their own profile" ON public."Users" FOR
 UPDATE TO authenticated USING (auth.uid() = id);
+-- CRITICAL: Allow users to insert their own profile if the trigger hasn't already
+CREATE POLICY "Users can insert their own profile" ON public."Users" FOR
+INSERT TO authenticated WITH CHECK (auth.uid() = id);
 CREATE POLICY "Anyone can read official users" ON public."Users" FOR
 SELECT TO authenticated USING (
         role = 'official'
@@ -161,7 +165,7 @@ VALUES (
         COALESCE(new.raw_user_meta_data->>'phone', ''),
         COALESCE(new.raw_user_meta_data->>'location', 'Kigali'),
         'citizen'
-    );
+    ) ON CONFLICT (id) DO NOTHING;
 RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
