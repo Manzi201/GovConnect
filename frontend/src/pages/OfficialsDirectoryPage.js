@@ -99,7 +99,7 @@ export default function OfficialsDirectoryPage() {
                 <section className="officials-grid">
                     {loading ? (
                         <div className="loading-spinner">Searching officials...</div>
-                    ) : officials.length > 0 ? (
+                    ) : (officials && officials.length > 0) ? (
                         officials.map(official => (
                             <div key={official.id} className="official-card glass">
                                 <div className="official-avatar">

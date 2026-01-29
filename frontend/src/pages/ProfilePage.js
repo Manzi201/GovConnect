@@ -95,7 +95,7 @@ export default function ProfilePage() {
               <div className="info-label">
                 <BadgeIcon fontSize="small" /> Account ID
               </div>
-              <div className="info-value">{profile?.id.substring(0, 8)}...</div>
+              <div className="info-value">{profile?.id ? profile.id.substring(0, 8) : '********'}...</div>
             </div>
           </div>
         </div>

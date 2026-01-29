@@ -101,7 +101,7 @@ export default function ComplaintsListPage() {
 
         {loading ? (
           <div className="loading-state glass">Loading complaints...</div>
-        ) : complaints.length === 0 ? (
+        ) : (!complaints || complaints.length === 0) ? (
           <div className="empty-state glass fade-in">
             <InfoIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
             <p>No complaints found matching your criteria.</p>
@@ -122,7 +122,7 @@ export default function ComplaintsListPage() {
                 </div>
 
                 <h3>{complaint.title}</h3>
-                <p>{complaint.description.length > 120 ? complaint.description.substring(0, 120) + '...' : complaint.description}</p>
+                <p>{complaint.description && complaint.description.length > 120 ? complaint.description.substring(0, 120) + '...' : (complaint.description || '')}</p>
 
                 <div className="card-footer">
                   <div className="meta-bits">

@@ -125,7 +125,7 @@ export default function AnalyticsDashboard({ user, isSuperAdmin = false }) {
             </div>
 
             <div className="activity-list">
-              {complaints.length > 0 ? (
+              {complaints && complaints.length > 0 ? (
                 complaints.slice(0, 5).map(c => (
                   <div key={c.id || c._id} className="activity-item">
                     <div className={`status-dot ${c.status}`}></div>

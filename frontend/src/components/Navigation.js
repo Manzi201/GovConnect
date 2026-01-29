@@ -60,7 +60,7 @@ export default function Navigation({ isAuthenticated, user, onLogout }) {
                   <div className="avatar">
                     {user?.profilePhoto ? <img src={user.profilePhoto} alt="" /> : <UserIcon />}
                   </div>
-                  <span className="user-name">{user?.name.split(' ')[0]}</span>
+                  <span className="user-name">{user?.name ? user.name.split(' ')[0] : 'Citizen'}</span>
                 </Link>
                 <button className="btn-logout" onClick={onLogout}>
                   <LogoutIcon fontSize="small" />
