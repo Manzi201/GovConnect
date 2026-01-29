@@ -43,6 +43,8 @@ export default function RegisterPage() {
 
     try {
       // 1. Sign up with Supabase Auth
+      // The database trigger (on_auth_user_created) will automatically 
+      // create the profile in the public.Users table.
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -55,55 +57,34 @@ export default function RegisterPage() {
         }
       });
 
-      if (authError) throw authError;
-
-      if (authData.user) {
-        // 2. Wait a small moment for any DB triggers to fire (optional but helpful)
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // 3. Check if profile already exists (triggered by DB on handle_new_user)
-        const { data: existingProfile } = await supabase
-          .from('Users')
-          .select('id')
-          .eq('id', authData.user.id)
-          .single();
-
-        if (!existingProfile) {
-          // 4. Insert user details into public 'Users' table only if trigger didn't catch it
-          const { error: dbError } = await supabase
-            .from('Users')
-            .insert([
-              {
-                id: authData.user.id,
-                name: formData.name,
-                email: formData.email,
-                phone: formData.phone,
-                location: formData.location,
-                role: 'citizen'
-              }
-            ]);
-
-          if (dbError) {
-            console.error('Error creating user profile:', dbError);
-            // Check if it's a permission error (RLS)
-            if (dbError.code === '42501') {
-              setError('Database permission error. Please make sure you have run the latest SQL setup in Supabase.');
-            } else {
-              setError(`Profile creation failed: ${dbError.message}`);
-            }
-            return;
-          }
+      if (authError) {
+        console.error('Signup error:', authError);
+        // This is where "Database error saving new user" usually shows up
+        if (authError.message.includes('Database error')) {
+          setError('System error: The database failed to create your profile. Please check if you have run the CLEAN_DATABASE_SETUP.sql script in Supabase.');
+        } else {
+          setError(authError.message);
         }
+        return;
+      }
 
-        // Success!
-        navigate('/login', { state: { message: 'Registration successful! Please login.' } });
+      if (authData?.user) {
+        // Success! 
+        // Note: If email confirmation is ON, they need to check their email.
+        // If email confirmation is OFF, they are logged in but we send them to login anyway for clarity.
+        navigate('/login', {
+          state: {
+            message: 'Account created! Please check your email for a confirmation link (if required) and then login.'
+          }
+        });
       }
     } catch (err) {
-      console.error('Registration error:', err);
-      setError(err.message || 'Registration failed. Please try again.');
+      console.error('Registration Exception:', err);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
+
 
   };
 
