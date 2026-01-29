@@ -58,33 +58,53 @@ export default function RegisterPage() {
       if (authError) throw authError;
 
       if (authData.user) {
-        // 2. Insert user details into public 'Users' table
-        const { error: dbError } = await supabase
-          .from('Users')
-          .insert([
-            {
-              id: authData.user.id,
-              name: formData.name,
-              email: formData.email,
-              phone: formData.phone,
-              location: formData.location,
-              role: 'citizen'
-            }
-          ]);
+        // 2. Wait a small moment for any DB triggers to fire (optional but helpful)
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        if (dbError) {
-          // If inserting into public table fails, we might want to cleanup auth user or warn
-          console.error('Error creating user profile:', dbError);
-          throw new Error('Account created but profile setup failed. Please contact support.');
+        // 3. Check if profile already exists (triggered by DB on handle_new_user)
+        const { data: existingProfile } = await supabase
+          .from('Users')
+          .select('id')
+          .eq('id', authData.user.id)
+          .single();
+
+        if (!existingProfile) {
+          // 4. Insert user details into public 'Users' table only if trigger didn't catch it
+          const { error: dbError } = await supabase
+            .from('Users')
+            .insert([
+              {
+                id: authData.user.id,
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                location: formData.location,
+                role: 'citizen'
+              }
+            ]);
+
+          if (dbError) {
+            console.error('Error creating user profile:', dbError);
+            // Check if it's a permission error (RLS)
+            if (dbError.code === '42501') {
+              setError('Database permission error. Please make sure you have run the latest SQL setup in Supabase.');
+            } else {
+              setError(`Profile creation failed: ${dbError.message}`);
+            }
+            return;
+          }
         }
 
-        navigate('/login');
+        // Success!
+        navigate('/login', { state: { message: 'Registration successful! Please login.' } });
       }
     } catch (err) {
+      console.error('Registration error:', err);
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
+
   };
 
   return (
