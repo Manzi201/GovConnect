@@ -1,9 +1,24 @@
--- GovConnect Unified Supabase Schema
--- This file combines core table definitions with Supabase Auth integration and RLS policies.
+-- GovConnect UNIFIED CLEAN Schema
+-- This file combines all tables with a fresh-start logic (drops first) and robust Supabase integration.
+-- WARNING: Running this script will DELETE all existing database data.
 -- ==========================================
--- 1. USERS TABLE (Linked to Supabase Auth)
+-- 1. CLEAN SLATE: Reset Everything
 -- ==========================================
-CREATE TABLE IF NOT EXISTS public."Users" (
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user();
+DROP FUNCTION IF EXISTS public.update_updated_at_column();
+DROP TABLE IF EXISTS public."PerformanceMetrics" CASCADE;
+DROP TABLE IF EXISTS public."Messages" CASCADE;
+DROP TABLE IF EXISTS public."Notifications" CASCADE;
+DROP TABLE IF EXISTS public."Complaints" CASCADE;
+DROP TABLE IF EXISTS public."Users" CASCADE;
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- ==========================================
+-- 2. TABLES DEFINITION
+-- ==========================================
+-- USERS TABLE (Linked to Supabase Auth)
+CREATE TABLE public."Users" (
     "id" UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     "name" VARCHAR(255) NOT NULL,
     "email" VARCHAR(255) NOT NULL UNIQUE,
@@ -20,13 +35,11 @@ CREATE TABLE IF NOT EXISTS public."Users" (
     "isVerified" BOOLEAN DEFAULT FALSE,
     "complaintsCount" INTEGER DEFAULT 0,
     "resolvedComplaintsCount" INTEGER DEFAULT 0,
-    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
--- ==========================================
--- 2. COMPLAINTS TABLE
--- ==========================================
-CREATE TABLE IF NOT EXISTS public."Complaints" (
+-- COMPLAINTS TABLE
+CREATE TABLE public."Complaints" (
     "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "complaintId" VARCHAR(255) UNIQUE NOT NULL,
     "userId" UUID REFERENCES public."Users"("id") ON DELETE
@@ -48,32 +61,27 @@ CREATE TABLE IF NOT EXISTS public."Complaints" (
         "isAnonymous" BOOLEAN DEFAULT FALSE,
         "views" INTEGER DEFAULT 0,
         "statusUpdates" JSONB DEFAULT '[]',
-        "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+        "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
--- ==========================================
--- 3. NOTIFICATIONS TABLE
--- ==========================================
-CREATE TABLE IF NOT EXISTS public."Notifications" (
+-- NOTIFICATIONS TABLE
+CREATE TABLE public."Notifications" (
     "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "userId" UUID NOT NULL REFERENCES public."Users"("id") ON DELETE CASCADE,
     "complaintId" UUID REFERENCES public."Complaints"("id") ON DELETE CASCADE,
     "type" VARCHAR(50) NOT NULL,
     -- 'status_change', 'assignment', 'resolution', 'feedback', 'general'
     "channel" VARCHAR(20) DEFAULT 'in-app',
-    -- 'in-app', 'email', 'sms', 'push'
     "title" VARCHAR(255) NOT NULL,
     "message" TEXT NOT NULL,
     "isRead" BOOLEAN DEFAULT FALSE,
-    "readAt" TIMESTAMP,
+    "readAt" TIMESTAMP WITH TIME ZONE,
     "metadata" JSONB DEFAULT '{}',
-    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
--- ==========================================
--- 4. MESSAGES TABLE
--- ==========================================
-CREATE TABLE IF NOT EXISTS public."Messages" (
+-- MESSAGES TABLE
+CREATE TABLE public."Messages" (
     "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "senderId" UUID NOT NULL REFERENCES public."Users"("id") ON DELETE CASCADE,
     "receiverId" UUID NOT NULL REFERENCES public."Users"("id") ON DELETE CASCADE,
@@ -81,14 +89,12 @@ CREATE TABLE IF NOT EXISTS public."Messages" (
     SET NULL,
         "content" TEXT NOT NULL,
         "isRead" BOOLEAN DEFAULT FALSE,
-        "readAt" TIMESTAMP,
-        "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        "readAt" TIMESTAMP WITH TIME ZONE,
+        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+        "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
--- ==========================================
--- 5. PERFORMANCE METRICS TABLE
--- ==========================================
-CREATE TABLE IF NOT EXISTS public."PerformanceMetrics" (
+-- PERFORMANCE METRICS TABLE
+CREATE TABLE public."PerformanceMetrics" (
     "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "date" DATE DEFAULT CURRENT_DATE,
     "totalComplaints" INTEGER DEFAULT 0,
@@ -103,46 +109,26 @@ CREATE TABLE IF NOT EXISTS public."PerformanceMetrics" (
     "districtPerformance" JSONB DEFAULT '[]',
     "satisfactionScore" FLOAT DEFAULT 0,
     "urgentComplaintsHandled" INTEGER DEFAULT 0,
-    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 -- ==========================================
--- 6. ROW LEVEL SECURITY (RLS) & POLICIES
+-- 3. SECURITY & POLICIES (RLS)
 -- ==========================================
--- Enable RLS on all tables
 ALTER TABLE public."Users" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."Complaints" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."Notifications" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."Messages" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public."PerformanceMetrics" ENABLE ROW LEVEL SECURITY;
--- 👤 USERS POLICIES
-DROP POLICY IF EXISTS "Users can read their own profile" ON public."Users";
-DROP POLICY IF EXISTS "Users can update their own profile" ON public."Users";
-DROP POLICY IF EXISTS "Users can insert their own profile" ON public."Users";
-DROP POLICY IF EXISTS "Anyone can read official users" ON public."Users";
-CREATE POLICY "Users can read their own profile" ON public."Users" FOR
-SELECT TO authenticated USING (auth.uid() = id);
+-- USERS POLICIES
+CREATE POLICY "Profiles are viewable by everyone" ON public."Users" FOR
+SELECT USING (true);
 CREATE POLICY "Users can update their own profile" ON public."Users" FOR
-UPDATE TO authenticated USING (auth.uid() = id);
--- CRITICAL: Allow users to insert their own profile if the trigger hasn't already
-CREATE POLICY "Users can insert their own profile" ON public."Users" FOR
-INSERT TO authenticated WITH CHECK (auth.uid() = id);
-CREATE POLICY "Anyone can read official users" ON public."Users" FOR
-SELECT TO authenticated USING (
-        role = 'official'
-        OR role = 'admin'
-    );
--- 📋 COMPLAINTS POLICIES
-DROP POLICY IF EXISTS "Citizens can view their own complaints" ON public."Complaints";
-DROP POLICY IF EXISTS "Citizens can insert complaints" ON public."Complaints";
-DROP POLICY IF EXISTS "Officials can view all complaints" ON public."Complaints";
-CREATE POLICY "Citizens can view their own complaints" ON public."Complaints" FOR
-SELECT TO authenticated USING (auth.uid() = "userId");
-CREATE POLICY "Citizens can insert complaints" ON public."Complaints" FOR
-INSERT TO authenticated WITH CHECK (auth.uid() = "userId");
-CREATE POLICY "Officials can view all complaints" ON public."Complaints" FOR
-SELECT TO authenticated USING (
-        EXISTS (
+UPDATE USING (auth.uid() = id);
+-- COMPLAINTS POLICIES
+CREATE POLICY "Users can view relevant complaints" ON public."Complaints" FOR
+SELECT USING (
+        auth.uid() = "userId"
+        OR EXISTS (
             SELECT 1
             FROM public."Users"
             WHERE id = auth.uid()
@@ -152,42 +138,56 @@ SELECT TO authenticated USING (
                 )
         )
     );
+CREATE POLICY "Users can create complaints" ON public."Complaints" FOR
+INSERT WITH CHECK (auth.uid() = "userId");
+-- MESSAGES POLICIES
+CREATE POLICY "Users can view their own messages" ON public."Messages" FOR
+SELECT USING (
+        auth.uid() = "senderId"
+        OR auth.uid() = "receiverId"
+    );
+CREATE POLICY "Users can send messages" ON public."Messages" FOR
+INSERT WITH CHECK (auth.uid() = "senderId");
 -- ==========================================
--- 7. AUTOMATION (TRIGGERS & FUNCTIONS)
+-- 4. AUTOMATION & TRIGGERS
 -- ==========================================
--- A. Auto-create User Profile on Auth Signup
+-- Function: create user profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user() RETURNS trigger AS $$ BEGIN
 INSERT INTO public."Users" (id, name, email, phone, location, role)
 VALUES (
         new.id,
-        COALESCE(new.raw_user_meta_data->>'name', 'User'),
+        COALESCE(new.raw_user_meta_data->>'name', 'Citizen'),
         new.email,
-        COALESCE(new.raw_user_meta_data->>'phone', ''),
+        COALESCE(new.raw_user_meta_data->>'phone', 'N/A'),
         COALESCE(new.raw_user_meta_data->>'location', 'Kigali'),
         'citizen'
     ) ON CONFLICT (id) DO NOTHING;
 RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
 AFTER
 INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
--- B. Auto-update updatedAt timestamps
-CREATE OR REPLACE FUNCTION update_updated_at_column() RETURNS TRIGGER AS $$ BEGIN NEW."updatedAt" = CURRENT_TIMESTAMP;
+-- Function: auto-update timestamps
+CREATE OR REPLACE FUNCTION public.update_updated_at_column() RETURNS trigger AS $$ BEGIN NEW."updatedAt" = timezone('utc'::text, now());
 RETURN NEW;
 END;
-$$ language 'plpgsql';
--- Apply updatedAt trigger to all tables
-DROP TRIGGER IF EXISTS update_users_modtime ON public."Users";
+$$ LANGUAGE plpgsql;
 CREATE TRIGGER update_users_modtime BEFORE
-UPDATE ON public."Users" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-DROP TRIGGER IF EXISTS update_complaints_modtime ON public."Complaints";
+UPDATE ON public."Users" FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_complaints_modtime BEFORE
-UPDATE ON public."Complaints" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+UPDATE ON public."Complaints" FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 -- ==========================================
--- 8. PERMISSIONS
+-- 5. PERMISSIONS
 -- ==========================================
-GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;
+GRANT USAGE ON SCHEMA public TO anon,
+    authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon,
+    authenticated,
+    service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon,
+    authenticated,
+    service_role;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO anon,
+    authenticated,
+    service_role;
